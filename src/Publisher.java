@@ -31,7 +31,7 @@ public class Publisher extends UserNode implements Runnable, Serializable {
         while(!socket.isClosed()) {
             if (this.inputScanner.hasNextLine()){
                 String messageToSend = this.inputScanner.nextLine();
-                if (messageToSend.equalsIgnoreCase("file")) {
+                if (messageToSend.equalsIgnoreCase("file")) { //file to initiate file upload
                     System.out.println("Please give full file path: \n");
                     String path = this.inputScanner.nextLine();
                     MultimediaFile file = new MultimediaFile(path);
@@ -47,18 +47,19 @@ public class Publisher extends UserNode implements Runnable, Serializable {
                     }
                 }
                 else if(messageToSend.equalsIgnoreCase("exit")) { //exit for dc
-                    disconnect();//which we also add to profile files
+                    disconnect();
                 }
                 else {
-                    Value messageValue = new Value(messageToSend);        //"file" in console to initiate file upload
+                    Value messageValue = new Value(messageToSend);
                     push(topic, messageValue);
                 }
             }
 
+            //----------NOT TESTED THREAD
             Thread autoCheck = new Thread(new Runnable() { //while taking input from clients' consoles above
                 // we automatically check for new Profile file uploads from Upload queue with a new thread
                 @Override
-                public synchronized void run() { //sync? probably
+                public synchronized void run() {
                     if (checkForNewContent()){
                         MultimediaFile uploadedFile = getNewContent();
                         List<byte[]> chunkList = uploadedFile.splitInChunks();
