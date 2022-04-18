@@ -48,7 +48,7 @@ public class Publisher extends UserNode implements Runnable, Serializable {
                 public void run() {
                     if (checkForNewContent()){
                         MultimediaFile uploadedFile = getNewContent();
-                        pushChunks(topic, uploadedFile);
+                        pushChunks(topic,uploadedFile);
                     }
                 }
             });
@@ -62,7 +62,7 @@ public class Publisher extends UserNode implements Runnable, Serializable {
         for (int i = 0; i < chunkList.size(); i++) { //get all byte arrays, create chunk name and value obj
             StringBuilder strB = new StringBuilder(file.getFileName());
             String chunkName = strB.insert(file.getFileName().lastIndexOf("."), String.format("_%s", i)).toString();
-            chunk = new Value("Sending file chunk", chunkName,
+            chunk = new Value("Sending file chunk", chunkName, this.profile,
                     file.getNumberOfChunks() - i - 1, chunkList.get(i), "Publisher");
             push(topic, chunk);
         }

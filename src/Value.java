@@ -35,9 +35,10 @@ public class Value implements Serializable {    //serializable object for all ki
         this.fileSharing = false;
     }
 
-    public Value(String message, String chunkName, int remainingChunks, byte[] chunk, String requestType){
+    public Value(String message, String chunkName, Profile profile, int remainingChunks, byte[] chunk, String requestType){
         this.message = message;
         this.chunk = Arrays.copyOf(chunk,chunk.length);
+        this.profile = profile;
         this.remainingChunks = remainingChunks;
         this.filename = chunkName;
         this.requestType = requestType;

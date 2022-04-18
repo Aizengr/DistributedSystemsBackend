@@ -1,14 +1,12 @@
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.*;
-import java.util.ArrayList;
 
 public class Broker implements Serializable {
 
     private final int id;
     protected static final int[] portList = new int[]{3000,4000,5000};
     private final InetAddress address;
-    public static ArrayList<Broker> brokerList = new ArrayList();
 
 
 
@@ -18,7 +16,6 @@ public class Broker implements Serializable {
         this.serverSocket = serverSocket;
         this.address = address;
         this.id = id;
-        brokerList.add(this);
     }
 
     public void startBroker(){
@@ -67,6 +64,8 @@ public class Broker implements Serializable {
     public int getBrokerID(){
         return this.id;
     }
+
+
 
 
     public static void main(String[] args) throws IOException {

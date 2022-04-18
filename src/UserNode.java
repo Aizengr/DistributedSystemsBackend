@@ -150,14 +150,13 @@ public class UserNode implements Serializable {
 
         Profile profile = new Profile("Kostas");
         Publisher kostaspub = new Publisher(profile);
-        //Consumer kostascon = new Consumer(profile);
+        Consumer kostascon = new Consumer(profile);
         Thread pub = new Thread(kostaspub); //initiating both on random port
-        //Thread con = new Thread(kostascon);
+        Thread con = new Thread(kostascon);
         //MultimediaFile upload = new MultimediaFile("C:\\Users\\kosta\\Desktop\\test.png");
         //kostaspub.profile.addFileToProfile(upload.getFileName(),upload);
         pub.start();
-        //con.start();
+        con.start();
     }
 }
-
 
