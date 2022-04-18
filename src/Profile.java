@@ -1,14 +1,14 @@
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.PriorityQueue;
 import java.util.Queue;
 
-public class Profile{
+public class Profile implements Serializable {
 
     private String username;
     private final HashMap<String,MultimediaFile> userMultimediaFileMap;
     private final Queue<MultimediaFile> pendingUpload;
-    private final HashMap<String,String> userSubscribedConversations;
+    private final HashMap<Integer,String> userSubscribedConversations;
 
     public Profile(String username){
         this.username = username;
@@ -35,7 +35,7 @@ public class Profile{
         return userSubscribedConversations.containsValue(topic);
     }
 
-    public void sub(String id, String topic){
+    public void sub(int id, String topic){
         userSubscribedConversations.put(id,topic);
     }
 
@@ -44,7 +44,7 @@ public class Profile{
     }
 
     public void unSub(String conversationName){
-        userSubscribedConversations.remove(conversationName);
+        userSubscribedConversations.remove(conversationName.hashCode());
     }
 
     public String getUsername(){

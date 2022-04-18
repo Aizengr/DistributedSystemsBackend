@@ -1,14 +1,24 @@
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
+import java.util.ArrayList;
 
 public class Broker implements Serializable {
 
+    private final int id;
+    protected static final int[] portList = new int[]{3000,4000,5000};
+    private final InetAddress address;
+    public static ArrayList<Broker> brokerList = new ArrayList();
+
+
+
     private final ServerSocket serverSocket;
 
-    public Broker(ServerSocket serverSocket){
+    public Broker(ServerSocket serverSocket , InetAddress address, int id){
         this.serverSocket = serverSocket;
+        this.address = address;
+        this.id = id;
+        brokerList.add(this);
     }
 
     public void startBroker(){
@@ -36,11 +46,35 @@ public class Broker implements Serializable {
         }
     }
 
+    public String getBrokerAddress(){
+        return this.address.toString();
+    }
+
+    public String getBrokerPort(){
+        return Integer.toString(serverSocket.getLocalPort());
+    }
+
+    public int getBrokerHash(){
+        String brokerHash = getBrokerAddress() + getBrokerPort();
+        return brokerHash.hashCode();
+    }
+
+    public static int getBrokerHash(String address, String port){
+        String brokerHash = address + port;
+        return brokerHash.hashCode();
+    }
+
+    public int getBrokerID(){
+        return this.id;
+    }
+
+
     public static void main(String[] args) throws IOException {
 
         ServerSocket serverSocket = new ServerSocket(3000);
-        System.out.println("Initiating: " + serverSocket);
-        Broker broker = new Broker(serverSocket);
+        Broker broker = new Broker(serverSocket, InetAddress.getByName("localhost"), 1);
+        System.out.println("Broker_" + broker.getBrokerID()+" connected at: " + serverSocket + "with address: " +  broker.getBrokerAddress()
+        + " and hashcode: " + broker.getBrokerHash());
         broker.startBroker();
     }
 }

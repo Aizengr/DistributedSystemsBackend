@@ -1,20 +1,24 @@
 
+import java.awt.image.AreaAveragingScaleFilter;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
-
 import static java.lang.Integer.parseInt;
 
 public class ClientHandler implements Runnable, Serializable{
 
     public static ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
-    public static HashMap<String,byte[]> FileHashMap = new HashMap<>();
+    public static ArrayList<ClientHandler> connectedPublishers = new ArrayList<>();
+    public static ArrayList<ClientHandler> registeredConsumers = new ArrayList<>();
+
+    public static HashMap<String,byte[]> fileHashMap = new HashMap<>();
 
 
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
     private String clientUsername;
+    private Profile userProfile;
     private static final int CHUNK_KB_SIZE = 512 * 1024;
 
 
@@ -23,15 +27,15 @@ public class ClientHandler implements Runnable, Serializable{
             this.socket = socket;
             this.out = new ObjectOutputStream(socket.getOutputStream());
             this.in = new ObjectInputStream(socket.getInputStream());
-            String topic = (String)readStream(); //I know first one is string
+            String topic = (String)readStream();
+            System.out.println(topic);
             out.writeObject(socket.getLocalPort());
             out.flush();
-            // -------------------------here we need to check if we are the correct broker
-            //IT'S IMPORTANT TO DISCONNECT HERE IF WE ARE NOT ON THE CORRECT ONE
-            Value initialMessage = (Value)readStream(); //I know second one is value
+            Value initialMessage = (Value)readStream();
             this.clientUsername = initialMessage.getUsername();
+            this.userProfile = initialMessage.getProfile();
             clientHandlers.add(this);
-            System.out.println("SERVER: " + clientUsername + " has connected!");
+            System.out.println("Client initiated connection!");
         } catch (IOException e) {
             closeEverything(socket, out, in);
         }
@@ -49,10 +53,15 @@ public class ClientHandler implements Runnable, Serializable{
                     // -------------------------here we check if we are the correct broker based on the topic
                     // if we are not the correct one it's important to disconnect here
                 } else if (streamObject instanceof Value value){
-                    if (!value.isFile()) {
-                        broadcastMessage(value); //if it's not a file just broadcast the message
-                    } else {
-                        FileHashMap.put(value.getFilename(), value.getChunk()); //if its a chunk add it to the Hashmap
+                    if (((Value) streamObject).getRequestType().equalsIgnoreCase("Publisher")) {
+                        if (!value.isFile()) {
+                            broadcastMessage(value); //if it's not a file just broadcast the message
+                        } else {
+                            fileHashMap.put(value.getFilename(), value.getChunk()); //if its a chunk add it to the Hashmap
+                        }
+                    }
+                    else if (((Value) streamObject).getRequestType().equalsIgnoreCase("Consumer")) {
+
                     }
                 }
             }
@@ -76,12 +85,12 @@ public class ClientHandler implements Runnable, Serializable{
         File downloadedFile = new File("C:\\Users\\kosta\\Desktop\\new_download.png");
         try{
             int chunkNumber = 0;
-            for (Map.Entry<String, byte[]> entry : FileHashMap.entrySet()) {
+            for (Map.Entry<String, byte[]> entry : fileHashMap.entrySet()) {
                 chunkNumber++;
             }
             byte[][] chunkList = new byte[chunkNumber][];
             String filename = "test";
-            for (Map.Entry<String, byte[]> entry : FileHashMap.entrySet()){
+            for (Map.Entry<String, byte[]> entry : fileHashMap.entrySet()){
                 if (entry.getKey().contains(filename)){
                     String chunkname = entry.getKey();
                     int index = parseInt(chunkname.substring(chunkname.indexOf(".") - 1, chunkname.indexOf(".")));

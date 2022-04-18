@@ -2,9 +2,6 @@
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 
@@ -41,11 +38,10 @@ public class Publisher extends UserNode implements Runnable, Serializable {
                     disconnect();
                 }
                 else {
-                    Value messageValue = new Value(messageToSend);
+                    Value messageValue = new Value(messageToSend, this.profile ,"Publisher");
                     push(topic, messageValue);
                 }
             }
-
             Thread autoCheck = new Thread(new Runnable() { //while taking input from clients' consoles above
                 // we automatically check for new Profile file uploads from Upload queue with a new thread
                 @Override
@@ -66,24 +62,25 @@ public class Publisher extends UserNode implements Runnable, Serializable {
         for (int i = 0; i < chunkList.size(); i++) { //get all byte arrays, create chunk name and value obj
             StringBuilder strB = new StringBuilder(file.getFileName());
             String chunkName = strB.insert(file.getFileName().lastIndexOf("."), String.format("_%s", i)).toString();
-            chunk = new Value("Sending file chunk", chunkName, file.getNumberOfChunks() - i - 1, chunkList.get(i));
+            chunk = new Value("Sending file chunk", chunkName,
+                    file.getNumberOfChunks() - i - 1, chunkList.get(i), "Publisher");
             push(topic, chunk);
         }
     }
 
-    public synchronized String searchTopic(){
+    public synchronized String searchTopic(){ //initial search topic function
         System.out.print("Please enter topic: ");
         String topic = this.inputScanner.nextLine();
         if(!profile.checkSub(topic)){          //check if subbed
-            String hash = hashTopic(topic);   //if not, hash and add to profile hashmap
-            if (hash!=null){
+            int hash = hashTopic(topic);   //if not, hash and add to profile hashmap
+            if (hash!=0){
                 profile.sub(hash,topic); //we sub to the topic as well
-                System.out.printf("Subbed to topic:%s %n\n", topic);
+                System.out.printf("Subbed to topic:%s with hash:%s %n\n", topic, hash);
             }
         }
-        Value value = new Value("search",this.profile.getUsername());
+        Value value = new Value("search",this.profile, "Publisher");
         try {
-            push(topic,value);
+            push(topic, value);
             int answer = (int)objectInputStream.readObject(); //asking and receiving port number for correct Broker based on the topic
             System.out.printf("Correct broker on port: %s\n", answer);
             if (answer != socket.getPort()){ //if we are not connected to the right one, switch conn
@@ -107,20 +104,8 @@ public class Publisher extends UserNode implements Runnable, Serializable {
     }
 
 
-    public String hashTopic(String topic){ //hash topic with MD5
-        try{
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte [] hashBytes = md.digest(topic.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hash = new StringBuilder();
-            for (byte b : hashBytes) {
-                hash.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
-            }
-            return hash.toString();
-        } catch (NoSuchAlgorithmException e){
-            System.out.println(e.getMessage());
-            disconnect();
-        }
-        return null;
+    public int hashTopic(String topic){ //hash topic
+        return topic.hashCode();
     }
 
 
@@ -130,6 +115,7 @@ public class Publisher extends UserNode implements Runnable, Serializable {
             System.out.printf("Trying to push to topic: %s with value: %s%n\n", topic , value);
             if (value.getMessage() != null){
                 objectOutputStream.writeObject(topic); // if value is not null write to stream
+                objectOutputStream.flush();
                 objectOutputStream.writeObject(value); // if value is not null write to stream
                 objectOutputStream.flush();
             }

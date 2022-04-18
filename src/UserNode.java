@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -15,8 +16,13 @@ public class UserNode implements Serializable {
     protected Scanner inputScanner;
 
     protected static final int[] portList = new int[]{3000};
+    protected static ArrayList<String> topicList = new ArrayList<String>(
+            Arrays.asList("DS1", "DS2", "DS3"));
+
+
     protected static ArrayList<Publisher> alivePublisherConnections;
     protected static ArrayList<Consumer> aliveConsumerConnections;
+
 
     public UserNode(){
         this(getRandomSocket(),createProfile());
@@ -144,13 +150,13 @@ public class UserNode implements Serializable {
 
         Profile profile = new Profile("Kostas");
         Publisher kostaspub = new Publisher(profile);
-        Consumer kostascon = new Consumer(profile);
+        //Consumer kostascon = new Consumer(profile);
         Thread pub = new Thread(kostaspub); //initiating both on random port
-        Thread con = new Thread(kostascon);
-        MultimediaFile upload = new MultimediaFile("C:\\Users\\kosta\\Desktop\\test.png");
-        kostaspub.profile.addFileToProfile(upload.getFileName(),upload);
+        //Thread con = new Thread(kostascon);
+        //MultimediaFile upload = new MultimediaFile("C:\\Users\\kosta\\Desktop\\test.png");
+        //kostaspub.profile.addFileToProfile(upload.getFileName(),upload);
         pub.start();
-        con.start();
+        //con.start();
     }
 }
 
