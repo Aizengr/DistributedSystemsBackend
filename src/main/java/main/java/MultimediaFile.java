@@ -1,3 +1,5 @@
+package main.java;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -42,7 +44,7 @@ public class MultimediaFile implements Serializable {
     }
 
 
-    public List<byte[]> splitInChunks(){ //method for splitting file in 512KB chunks with byte array
+    public List<byte[]> splitInChunks(){ //method for splitting file in 512KB chunks with byte arrays
         try {
             byte[] multimediaFileByteArray = Files.readAllBytes(this.path);
             List<byte[]> chunks = new ArrayList<>();

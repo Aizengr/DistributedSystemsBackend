@@ -1,12 +1,19 @@
+package main.java;
+
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.Queue;
+
 
 public class Profile implements Serializable {
 
     private String username;
-    private final HashMap<String,MultimediaFile> userMultimediaFileMap;
+    public static Multimap<String,MultimediaFile> userMultimediaFileMap;
     private final Queue<MultimediaFile> pendingUpload;
     private final HashMap<Integer,String> userSubscribedConversations;
 
@@ -14,7 +21,7 @@ public class Profile implements Serializable {
         this.username = username;
         this.userSubscribedConversations = new HashMap<>();
         this.pendingUpload = new LinkedList<>();
-        this.userMultimediaFileMap = new HashMap<>();
+        userMultimediaFileMap = ArrayListMultimap.create();
     }
 
     public void addFileToProfile(String fileName, MultimediaFile file){
@@ -39,8 +46,8 @@ public class Profile implements Serializable {
         userSubscribedConversations.put(id,topic);
     }
 
-    public void removeFile(String name){
-        userMultimediaFileMap.remove(name);
+    public void removeFile(String name, MultimediaFile file){
+        userMultimediaFileMap.remove(name,file);
     }
 
     public void unSub(String conversationName){
@@ -59,4 +66,17 @@ public class Profile implements Serializable {
         return pendingUpload.size();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Profile profile = (Profile) o;
+        return Objects.equals(username, profile.username) && Objects.equals(pendingUpload, profile.pendingUpload)
+                && Objects.equals(userSubscribedConversations, profile.userSubscribedConversations);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(username, pendingUpload, userSubscribedConversations);
+    }
 }

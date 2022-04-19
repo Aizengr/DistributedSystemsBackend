@@ -1,3 +1,4 @@
+package main.java;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.*;
@@ -22,7 +23,7 @@ public class Broker implements Serializable {
         try {
             while (!serverSocket.isClosed()){
                 Socket socket = serverSocket.accept();
-                System.out.println("A new client has connected!");
+                System.out.println("A new component connected!");
                 ClientHandler clientHandler = new ClientHandler(socket);
                 Thread thread = new Thread(clientHandler);
                 thread.start();
