@@ -1,12 +1,8 @@
 package main.java;
 
 import java.io.*;
-import java.math.BigInteger;
 import java.net.Socket;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
-
 import static java.lang.Integer.parseInt;
 
 public class UserNode implements Serializable {
@@ -23,9 +19,9 @@ public class UserNode implements Serializable {
     protected ObjectInputStream objectInputStream;
     protected Scanner inputScanner;
 
+    private static final int[] portNumbers = new int[]{3000,4000,5000};
     private static HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresses
     private static HashMap<Integer,Integer> availableBrokers =  new HashMap<>(); //ids, ports
-    private static HashMap<Integer,String> hashedTopics; //hash and topics
     private static List<String> availableTopics = new ArrayList<>();
 
     protected ArrayList<Publisher> alivePublisherConnections;
@@ -50,7 +46,7 @@ public class UserNode implements Serializable {
 
     private static int getRandomSocketPort(){ //generates a random port for initial communication with a random Broker
 
-        return parseInt(portsAndAddresses.get(new Random().nextInt(portsAndAddresses.size())));
+        return portNumbers[new Random().nextInt(portNumbers.length)];
 
     }
 
@@ -196,46 +192,32 @@ public class UserNode implements Serializable {
     }
 
     private void readConfig(String path){ //reading ports, hostnames and topics from config file
-        File file = new File(path); //same methodon both brokers and usernode
+        File file = new File(path); //same method on both brokers and user node
         try {
             Scanner reader = new Scanner(file);
             reader.useDelimiter(",");
             String id, hostname, port;
-            while(reader.hasNext()){
+            id = reader.next();
+            while(reader.hasNext() && !id.equalsIgnoreCase("#")){
+                hostname = reader.next();
+                port = reader.next();
+                portsAndAddresses.put(parseInt(port),hostname);
+                availableBrokers.put(parseInt(id),parseInt(port));
                 id = reader.next();
-                while(!id.equalsIgnoreCase("#")){
-                    hostname = reader.next();
-                    port = reader.next();
-                    portsAndAddresses.put(parseInt(port),hostname);
-                    availableBrokers.put(parseInt(id),parseInt(port));
-                    id = reader.next();
-                }
-                availableTopics.add(id);
+            }
+            while(reader.hasNext()){
+                String topic = reader.next();
+                availableTopics.add(topic);
             }
         } catch (FileNotFoundException e){
             System.out.println(e.getMessage());
         }
     }
 
-    public static String encryptThisString(String input){ //SHA-1 encryption method
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            byte[] messageDigest = md.digest(input.getBytes());
-            BigInteger no = new BigInteger(1, messageDigest);
-            String hashtext = no.toString(16);
-            while (hashtext.length() < 32) {
-                hashtext = "0" + hashtext;
-            }
-            return hashtext;
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
 
     public static void main(String[] args) { //running UserNode
 
-        Profile profile = new Profile("Mitsos");
+        Profile profile = new Profile("Nikolas");
         Publisher kostaspub = new Publisher(profile);
         Consumer kostascon = new Consumer(profile);
         Thread pub = new Thread(kostaspub); //initiating both on random port
