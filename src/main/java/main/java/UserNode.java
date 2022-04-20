@@ -20,7 +20,7 @@ public class UserNode implements Serializable {
     protected ObjectInputStream objectInputStream;
     protected Scanner inputScanner;
 
-    protected static final int[] portList = new int[]{3000};
+    protected static final int[] portList = new int[]{4000};
     protected static ArrayList<String> topicList = new ArrayList<>(
             Arrays.asList("DS1", "DS2", "DS3"));
 

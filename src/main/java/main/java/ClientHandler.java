@@ -1,6 +1,7 @@
 package main.java;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 
 import java.io.*;
@@ -16,7 +17,7 @@ public class ClientHandler implements Runnable,Serializable {
 
     public static Multimap<Profile,String> knownPublishers = ArrayListMultimap.create();
     public static Multimap<Profile,String> registeredConsumers = ArrayListMultimap.create();
-    public static Multimap<String,Value> messagesMap = ArrayListMultimap.create();
+    public static Multimap<String,Value> messagesMap = LinkedListMultimap.create();
 
 
     private Socket socket;
@@ -50,7 +51,7 @@ public class ClientHandler implements Runnable,Serializable {
                     //------------------CHECK TOPIC HERE
                     //------------------
                     int correctPort = sendCorrectBroker(topic);
-                    if (correctPort == this.socket.getPort()){
+                    if (correctPort == this.socket.getLocalPort()){
                         Value value = (Value) readStream();
                         if (value != null) {
                             if (this.username == null) { //we set the username for the client handler on first value object we receive
