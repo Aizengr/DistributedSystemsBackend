@@ -64,11 +64,11 @@ public class ClientHandler implements Runnable,Serializable {
                                 checkPublisher(userProfile, topic);
                             } else if (value.getRequestType().equalsIgnoreCase("Publisher")) {
                                 if (!value.isFile()) { //usual data passing case
-                                    messagesMap.put(topic, value);
-                                    broadcastMessage(topic, value);
+                                    messagesMap.put(topic,value);
+                                    broadcastMessage(topic,value);
                                 } else {
-                                    messagesMap.put(topic, value);
-                                    broadcastFile(topic, value);
+                                    messagesMap.put(topic,value);
+                                    broadcastFile(topic,value);
                                 }
                             } else if (value.getRequestType().equalsIgnoreCase("Consumer")
                                     && value.getMessage().equalsIgnoreCase("dataRequest")) { //initial case
@@ -139,12 +139,12 @@ public class ClientHandler implements Runnable,Serializable {
 
     private synchronized int sendCorrectBroker(String topic){
         try {
-            out.writeObject(4000); //NEED TO UPDATE THIS TO CHECK FOR THE CORRECT BROKER PORT BASED
+            out.writeObject(3000); //NEED TO UPDATE THIS TO CHECK FOR THE CORRECT BROKER PORT BASED
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return 4000;
+        return 3000;
     }
 
     public void checkConsumer(Profile profile, String topic){
