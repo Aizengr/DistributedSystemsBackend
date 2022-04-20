@@ -1,25 +1,34 @@
 package main.java;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
+import java.math.BigInteger;
 import java.net.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Scanner;
+
+import static java.lang.Integer.parseInt;
 
 public class Broker implements Serializable {
 
     private final int id;
     private final InetAddress address;
 
-    private HashMap<Integer,String> portsAndAddresses; //ports and addresses
-    private HashMap<Integer,HashMap<Integer,String>> availableBrokers; //ids, ports and addresses
-    private HashMap<Integer,String> hashTopics; //hash and topics
-    private HashMap<Integer,Integer> hashedTopicsToBrokers; //topic hashes their corresponding Broker
+    private static HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresses
+    private static HashMap<Integer,Integer> availableBrokers =  new HashMap<>(); //ids, ports
+    private static HashMap<Integer,String> hashedTopics = new HashMap<>();//hash and topics
+    private static HashMap<Integer,Integer> hashedTopicsToBrokers = new HashMap<>(); //topic hashes their corresponding Broker
+    private static List<String> availableTopics = new ArrayList<>();
 
     private final ServerSocket serverSocket;
 
-    public Broker(ServerSocket serverSocket , InetAddress address, int id){
+    public Broker(ServerSocket serverSocket, InetAddress address, int id){
         this.serverSocket = serverSocket;
         this.address = address;
         this.id = id;
+        readConfig(System.getProperty("user.dir").concat("\\src\\main\\java\\main\\java\\config.txt"));
     }
 
     public void startBroker(){
@@ -55,6 +64,33 @@ public class Broker implements Serializable {
         return Integer.toString(serverSocket.getLocalPort());
     }
 
+
+    public int getBrokerID(){
+        return this.id;
+    }
+
+    private void readConfig(String path){ //reading ports, hostnames and topics from config file
+        File file = new File(path); //same method on both brokers and user node
+        try {
+            Scanner reader = new Scanner(file);
+            reader.useDelimiter(",");
+            String id, hostname, port;
+            while(reader.hasNext()){
+                id = reader.next();
+                while(!id.equalsIgnoreCase("#")){
+                    hostname = reader.next();
+                    port = reader.next();
+                    portsAndAddresses.put(parseInt(port),hostname);
+                    availableBrokers.put(parseInt(id),parseInt(port));
+                    id = reader.next();
+                }
+                availableTopics.add(id);
+            }
+        } catch (FileNotFoundException e){
+            System.out.println(e.getMessage());
+        }
+    }
+
     public int getBrokerHash(){
         String brokerHash = getBrokerAddress() + getBrokerPort();
         return brokerHash.hashCode();
@@ -65,12 +101,25 @@ public class Broker implements Serializable {
         return brokerHash.hashCode();
     }
 
-    public int getBrokerID(){
-        return this.id;
+    private static void hashTopics(){
+        for (String topic : availableTopics){
+            //hashedTopics.put();
+        }
     }
 
-    private void readConfigurationFile(String file){
-        //read config to retrieve all relevant information regarding brokers and topics and then assign topics to brokers
+    public static String encryptThisString(String input){ //SHA-1 encryption method
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            byte[] messageDigest = md.digest(input.getBytes());
+            BigInteger no = new BigInteger(1, messageDigest);
+            String hashtext = no.toString(16);
+            while (hashtext.length() < 32) {
+                hashtext = "0" + hashtext;
+            }
+            return hashtext;
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
