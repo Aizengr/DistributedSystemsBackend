@@ -90,8 +90,6 @@ public class Broker implements Serializable {
         }
     }
 
-    //public int getBrokerHash(){}
-
     private static void hashTopics(){ //hashing topics with SHA-1 and getting their decimal value
         for (String topic : availableTopics){
             BigInteger hash = new BigInteger(encryptThisString(topic),16);
@@ -103,7 +101,7 @@ public class Broker implements Serializable {
         for (Map.Entry<BigInteger, String> entry : hashedTopics.entrySet()){
             topicsToBrokers.put(entry.getValue(), entry.getKey().mod(BigInteger.valueOf(3)).intValue());
         }
-        System.out.println(topicsToBrokers);
+        System.out.println("Topics to Brokers: " + topicsToBrokers);
     }
 
     public static String encryptThisString(String input){ //SHA-1 encryption method
@@ -141,8 +139,8 @@ public class Broker implements Serializable {
 
     public static void main(String[] args) throws IOException {
 
-        ServerSocket serverSocket = new ServerSocket(5000);
-        Broker broker = new Broker(serverSocket, InetAddress.getByName("127.0.0.1"), 3);
+        ServerSocket serverSocket = new ServerSocket(3000);
+        Broker broker = new Broker(serverSocket, InetAddress.getByName("127.0.0.1"), 0);
         System.out.println("SYSTEM: Broker_" + broker.getBrokerID()+" initialized at: "
                 + serverSocket + "with address: " +  broker.getBrokerAddress());
         broker.startBroker();

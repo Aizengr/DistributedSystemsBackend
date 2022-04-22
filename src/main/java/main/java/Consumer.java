@@ -54,13 +54,23 @@ public class Consumer extends UserNode implements Runnable,Serializable {
     private void listenForMessage(){
         try {
             Object message = objectInputStream.readObject();
-            System.out.println("Receiving live chat message:" + message);
             if (message instanceof Value && ((Value)message).getRequestType().equalsIgnoreCase("liveMessage")){
+                System.out.println("Receiving live chat message:" + message);
                 System.out.println(((Value) message).getProfile().getUsername() +":" + ((Value) message).getMessage());
             }
-            else{
-                //need to implement broadcasting file
+            else if (message instanceof Value && ((Value)message).getRequestType().equalsIgnoreCase("liveFile")){
+                System.out.println("SYSTEM: " + ((Value) message).getUsername() + " has started file sharing. Filename: " + ((Value) message).getFilename());
+                List<Value> chunkList = new ArrayList<>();
+                int incomingChunks = ((Value) message).getRemainingChunks();
+                for (; incomingChunks >= 0; incomingChunks--){
+                    chunkList.add((Value)message);
+                    if (incomingChunks == 0){break;}
+                    message = objectInputStream.readObject();
+                }
+                System.out.println(chunkList);
+                writeFiles(chunkList);
             }
+
         } catch (IOException | ClassNotFoundException e) {
             System.out.println(e.getMessage());
             disconnect();
@@ -131,6 +141,8 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         }
     }
 
+
+
     private Value[] sortChunks(String filename, List<Value> chunks){ //retrieving and sorting chunks for
         List<Value> filenameChunks = new ArrayList<>(); // a specific filename
         for (Value chunk : chunks) {
@@ -146,5 +158,4 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         }
         return sortedChunks;
     }
-
 }

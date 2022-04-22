@@ -3,6 +3,7 @@ package main.java;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.TreeMultimap;
 
 import java.io.*;
 import java.net.Socket;
@@ -19,7 +20,6 @@ public class ClientHandler implements Runnable,Serializable {
     public static Multimap<Profile,String> registeredConsumers = ArrayListMultimap.create();
     public static Multimap<String,Value> messagesMap = LinkedListMultimap.create();
 
-
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
@@ -31,9 +31,13 @@ public class ClientHandler implements Runnable,Serializable {
             this.socket = socket;
             this.out = new ObjectOutputStream(socket.getOutputStream());
             this.in = new ObjectInputStream(socket.getInputStream());
-            clientHandlers.add(this);
-            connectedPublishers.add(this);
-            connectedConsumers.add(this);
+            clientHandlers.add(this); //keeping all connections
+            if (!connectedPublishers.contains(this)){
+                connectedPublishers.add(this); //keeping only pub connections
+            }
+            if (!connectedConsumers.contains(this)){
+                connectedConsumers.add(this); //keeping only consumer connections
+            }
         } catch (IOException e) {
             closeEverything(socket, out, in);
         }
@@ -45,7 +49,7 @@ public class ClientHandler implements Runnable,Serializable {
         Object streamObject;
         while(!socket.isClosed()){
             streamObject = readStream();
-            System.out.println(streamObject);
+            System.out.println("SYSTEM: Received object: " + streamObject);
             if(streamObject!=null){
                 if (streamObject instanceof String topic) {
                     int correctPort = Broker.searchBroker(topic);
@@ -60,18 +64,33 @@ public class ClientHandler implements Runnable,Serializable {
                             if (value.getRequestType().equalsIgnoreCase("Publisher")
                                     && value.getMessage().equalsIgnoreCase("search")) {  //initial Search case
                                 Profile userProfile = value.getProfile();
-                                checkPublisher(userProfile, topic);
+                                checkPublisher(userProfile, topic); //consumer and publisher are two different components but
+                                checkConsumer(userProfile, topic); // we assume that if one client is publisher he is also a consumer to the same topic and vice versa
                             } else if (value.getRequestType().equalsIgnoreCase("Publisher")) {
-                                if (!value.isFile()) { //usual data passing case
-                                    messagesMap.put(topic,value);
+                                if (!value.isFile()) {
+                                    messagesMap.put(topic,value); //live message broadcasting to all connected consumers
                                     broadcastMessage(topic,value);
                                 } else {
-                                    messagesMap.put(topic,value);
-                                    broadcastFile(topic,value);
+                                    List<Value> chunkList = new ArrayList<>(); // live file sharing to all connected consumers
+                                    while(value.getRemainingChunks() >= 0){
+                                        try {
+                                            messagesMap.put(topic,value);
+                                            chunkList.add(value);
+                                            if (value.getRemainingChunks() == 0){break;}
+                                            topic = (String)in.readObject(); //this is needed
+                                            value = (Value)in.readObject(); // as we also push topic
+                                            System.out.println(topic);
+                                            System.out.println(value);
+                                        } catch (IOException | ClassNotFoundException e) {
+                                            System.out.println(e.getMessage());
+                                        }
+                                    }
+                                    broadcastFile(topic, chunkList);
                                 }
                             } else if (value.getRequestType().equalsIgnoreCase("Consumer")
                                     && value.getMessage().equalsIgnoreCase("dataRequest")) { //initial case
                                 checkConsumer(value.getProfile(), value.getTopic());
+                                checkPublisher(value.getProfile(), topic);
                                 pull(value.getTopic());
                             }
                         }
@@ -86,15 +105,29 @@ public class ClientHandler implements Runnable,Serializable {
 
     private synchronized void sendCorrectBroker(int port){
         try {
-            out.writeObject(port); //NEED TO UPDATE THIS TO CHECK FOR THE CORRECT BROKER PORT BASED
+            out.writeObject(port); //sending correct broker port to UserNode
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void broadcastFile(String topic, Value value){
-        //need to implement this
+    private void broadcastFile(String topic, List<Value> chunkList){
+        for (ClientHandler consumer : connectedConsumers) {
+            if (!consumer.getUsername().equalsIgnoreCase(this.username)) {
+                System.out.println("File sharing to topic: " + topic.toUpperCase() +
+                        " from: " + this.username + " to: " + consumer.getUsername());
+                try {
+                    for (Value value : chunkList) {
+                        value.setRequestType("liveFile");
+                        consumer.out.writeObject(value);
+                        consumer.out.flush();
+                    }
+                } catch (IOException e) {
+                    System.out.println(e.getMessage());
+                }
+            }
+        }
     }
 
     private void broadcastMessage(String topic, Value value){
@@ -145,17 +178,18 @@ public class ClientHandler implements Runnable,Serializable {
         return count;
     }
 
-    public void checkConsumer(Profile profile, String topic){
-        if (!(registeredConsumers.containsEntry(profile,topic))){
+    public void checkConsumer(Profile profile, String topic){ //NEEDS DIFFERENT IMPLEMENTATION
+        if (!(registeredConsumers.containsEntry(profile,topic))){ //CONTAINS ENTRY IS NOT WORKING AS EXPECTED, ADDING DOUBLES
             System.out.println("SYSTEM: New consumer registered to topic: " + topic
-                    + " with username: " +profile.getUsername());
+                    + " with username: " + profile.getUsername());
             registeredConsumers.put(profile, topic);
         }
     }
 
 
-    public void checkPublisher(Profile profile, String topic){ //checks if publisher is known and adds them along with the topic
-        if (!(knownPublishers.containsEntry(profile,topic))){
+    public void checkPublisher(Profile profile, String topic){ //NEEDS DIFFERENT IMPLEMENTATION
+         //CONTAINS ENTRY IS NOT WORKING AS EXPECTED, ADDING DOUBLES
+        if (!(knownPublishers.containsEntry(profile, topic))){
             System.out.println("SYSTEM: New publisher added to known Publishers for topic: " + topic
                     + " with username: " +profile.getUsername());
             knownPublishers.put(profile, topic);

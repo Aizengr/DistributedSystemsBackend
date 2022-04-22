@@ -19,7 +19,7 @@ public class UserNode implements Serializable {
     protected ObjectInputStream objectInputStream;
     protected Scanner inputScanner;
 
-    private static final int[] portNumbers = new int[]{3000,4000,5000};
+    private static final int[] portNumbers = new int[]{3000};
     private static HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresses
     private static HashMap<Integer,Integer> availableBrokers =  new HashMap<>(); //ids, ports
     private static List<String> availableTopics = new ArrayList<>();
