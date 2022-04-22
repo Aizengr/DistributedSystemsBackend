@@ -116,7 +116,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         List<String> filenames = new ArrayList<>(); //random chunkList that we received
         String temp = "";
         for (Value chunk : chunkList){ //getting all different filenames from the chunkList received
-            System.out.println("----Received chunk: " + chunk);
+            System.out.println("----Received chunk: " + chunk); //ISSUE WHEN WE HAVE 2 DIFFERENT FILES WITH THE SAME NAME
             String chunkName = chunk.getFilename();
             String filename = chunkName.substring(0, chunkName.indexOf("_"));
             String fileExt = chunkName.substring(chunkName.indexOf("."));
@@ -127,7 +127,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         }
         for (String filename : filenames) { //for each filename create a file on the download path
             System.out.println("----Found name: " + filename);
-            Value[] sortedChunks = sortChunks(filename, chunkList);
+            Value[] sortedChunks = sortChunks(filename, chunkList); //sort all chunks for the filename
             System.out.println(Arrays.toString(sortedChunks));
             File download = new File(downloadPath + sortedChunks[0].getProfile().getUsername() + "_" + filename);
             try {
@@ -145,8 +145,8 @@ public class Consumer extends UserNode implements Runnable,Serializable {
 
 
 
-    private Value[] sortChunks(String filename, List<Value> chunks){ //retrieving and sorting chunks for
-        List<Value> filenameChunks = new ArrayList<>(); // a specific filename
+    private Value[] sortChunks(String filename, List<Value> chunks){ //retrieving and sorting chunks
+        List<Value> filenameChunks = new ArrayList<>(); // for a specific filename
         for (Value chunk : chunks) {
             if (chunk.getFilename().startsWith(filename.substring(0, filename.indexOf(".")))){
                 filenameChunks.add(chunk);
