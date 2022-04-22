@@ -58,7 +58,7 @@ public class MultimediaFile implements Serializable {
             }
             return chunks;
         } catch (IOException e){
-            e.printStackTrace();
+            System.out.println("Couldn't find filepath. Please try again by typing file.");
         }
         return null;
     }

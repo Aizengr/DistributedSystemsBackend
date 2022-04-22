@@ -1,5 +1,6 @@
 package main.java;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
@@ -14,7 +15,6 @@ public class ClientHandler implements Runnable,Serializable {
     public static ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
     public static ArrayList<ClientHandler> connectedPublishers = new ArrayList<>();
     public static ArrayList<ClientHandler> connectedConsumers = new ArrayList<>();
-
 
     public static Multimap<Profile,String> knownPublishers = ArrayListMultimap.create();
     public static Multimap<Profile,String> registeredConsumers = ArrayListMultimap.create();
@@ -32,13 +32,14 @@ public class ClientHandler implements Runnable,Serializable {
             this.out = new ObjectOutputStream(socket.getOutputStream());
             this.in = new ObjectInputStream(socket.getInputStream());
             clientHandlers.add(this); //keeping all connections
-            if (!connectedPublishers.contains(this)){
-                connectedPublishers.add(this); //keeping only pub connections
+            String id = (String)in.readObject();
+            if (id.equalsIgnoreCase("Publisher")) {
+                connectedPublishers.add(this); //keeping only alive publishers
             }
-            if (!connectedConsumers.contains(this)){
-                connectedConsumers.add(this); //keeping only consumer connections
+            else if (id.equalsIgnoreCase("Consumer")){
+                connectedConsumers.add(this); //keeping only alive consumers
             }
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             closeEverything(socket, out, in);
         }
     }
@@ -49,8 +50,8 @@ public class ClientHandler implements Runnable,Serializable {
         Object streamObject;
         while(!socket.isClosed()){
             streamObject = readStream();
-            System.out.println("SYSTEM: Received object: " + streamObject);
             if(streamObject!=null){
+                System.out.println("SYSTEM: Received object: " + streamObject);
                 if (streamObject instanceof String topic) {
                     int correctPort = Broker.searchBroker(topic);
                     sendCorrectBroker(correctPort);
@@ -185,8 +186,6 @@ public class ClientHandler implements Runnable,Serializable {
             registeredConsumers.put(profile, topic);
         }
     }
-
-
     public void checkPublisher(Profile profile, String topic){ //NEEDS DIFFERENT IMPLEMENTATION
          //CONTAINS ENTRY IS NOT WORKING AS EXPECTED, ADDING DOUBLES
         if (!(knownPublishers.containsEntry(profile, topic))){
@@ -196,36 +195,29 @@ public class ClientHandler implements Runnable,Serializable {
         }
     }
 
-
     public synchronized Object readStream(){ //main reading object method
         try {
             return in.readObject();
         } catch (ClassNotFoundException | IOException e){
-            printHashMap(); //on exception (client dc) we write the file as a test
             closeEverything(socket, out, in);
             System.out.println(e.getMessage());
         }
         return null;
     }
 
-    public void printHashMap(){
-        for (Map.Entry<String,Value> entry : messagesMap.entries()){
-            System.out.println("SYSTEM: Received in following order, topic: " + entry.getKey()
-                    + " and value: " + entry.getValue());
-        }
-    }
-
     public String getUsername(){
         return this.username;
     }
 
-    public void removeClientHandler(){ //disconnects clients
+    public void removeClientHandler(){ //disconnects client
         clientHandlers.remove(this);
+        connectedPublishers.remove(this);
+        connectedConsumers.remove(this);
         System.out.println("SYSTEM: A component has disconnected!");
     }
 
     public void closeEverything(Socket socket, ObjectOutputStream out, ObjectInputStream in){
-        removeClientHandler(); //removes clients and closes everything
+        removeClientHandler(); //removes client and closes everything
         try {
             if (out != null) {
                 out.close();

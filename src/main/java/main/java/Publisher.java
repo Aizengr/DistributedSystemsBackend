@@ -11,6 +11,11 @@ public class Publisher extends UserNode implements Runnable,Serializable {
     public Publisher(Profile profile){
         super(profile);
         connect(currentPort);
+        try {
+            objectOutputStream.writeObject("Publisher");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         alivePublisherConnections.add(this);
     }
 

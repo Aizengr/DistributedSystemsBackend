@@ -3,7 +3,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import static java.lang.Integer.parseInt;
 
 public class Consumer extends UserNode implements Runnable,Serializable {
@@ -11,8 +10,11 @@ public class Consumer extends UserNode implements Runnable,Serializable {
 
     public Consumer(Profile profile){
         super(profile);
-        if (socket == null){
-            connect(currentPort);
+        connect(currentPort);
+        try {
+            objectOutputStream.writeObject("Consumer");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
         aliveConsumerConnections.add(this);
     }
@@ -62,7 +64,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
                 System.out.println("SYSTEM: " + ((Value) message).getUsername() + " has started file sharing. Filename: " + ((Value) message).getFilename());
                 List<Value> chunkList = new ArrayList<>();
                 int incomingChunks = ((Value) message).getRemainingChunks();
-                for (; incomingChunks >= 0; incomingChunks--){
+                for (;incomingChunks >= 0; incomingChunks--){
                     chunkList.add((Value)message);
                     if (incomingChunks == 0){break;}
                     message = objectInputStream.readObject();
