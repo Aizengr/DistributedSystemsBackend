@@ -12,11 +12,11 @@ public class Broker implements Serializable {
     private final int id;
     private final InetAddress address;
 
-    private static HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresses
-    private static HashMap<Integer,Integer> availableBrokers =  new HashMap<>(); //ids, ports
-    private static HashMap<BigInteger,String> hashedTopics = new HashMap<>();//hash and topics
-    private static HashMap<String,Integer> topicsToBrokers = new HashMap<>(); //topic and broker ids
-    private static List<String> availableTopics = new ArrayList<>();
+    private static final HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresses
+    private static final HashMap<Integer,Integer> availableBrokers =  new HashMap<>(); //ids, ports
+    private static final HashMap<BigInteger,String> hashedTopics = new HashMap<>();//hash and topics
+    private static final HashMap<String,Integer> topicsToBrokers = new HashMap<>(); //topic and broker ids
+    private static final List<String> availableTopics = new ArrayList<>();
 
     private final ServerSocket serverSocket;
 

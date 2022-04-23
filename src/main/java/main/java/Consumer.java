@@ -1,5 +1,8 @@
 package main.java;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -42,7 +45,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
             for (Value message : data) {
                 if (message.isFile()) {
                     chunkList.add(message);
-                    writeFiles(chunkList);
+                    writeFilesByID(chunkList);
                 } else {
                     System.out.println(message.getProfile().getUsername() + ": " + message.getMessage());
                 }
@@ -53,7 +56,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         }
     }
 
-    private void listenForMessage(){
+    private void listenForMessage(){ //main consumer functionality
         try {
             Object message = objectInputStream.readObject();
             if (message instanceof Value && ((Value)message).getRequestType().equalsIgnoreCase("liveMessage")){
@@ -70,14 +73,12 @@ public class Consumer extends UserNode implements Runnable,Serializable {
                     message = objectInputStream.readObject();
                 }
                 System.out.println(chunkList);
-                writeFiles(chunkList);
+                writeFilesByID(chunkList);
             }
-
         } catch (IOException | ClassNotFoundException e) {
             System.out.println(e.getMessage());
             disconnect();
         }
-
     }
 
 
@@ -93,43 +94,60 @@ public class Consumer extends UserNode implements Runnable,Serializable {
                 data.add((Value)objectInputStream.readObject());
             }
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
             disconnect();
         }
         return data;
     }
 
-    private synchronized int checkBroker(String topic){
+    private synchronized int checkBroker(String topic){ //checking if we are on the correct broker
         int response = 0;
         try {
             objectOutputStream.writeObject(topic);
             objectOutputStream.flush();
             response = (int)objectInputStream.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
             disconnect();
         }
         return response;
     }
 
-    private synchronized void writeFiles(List<Value> chunkList){ //withdrawal and writing of files from the
-        List<String> filenames = new ArrayList<>(); //random chunkList that we received
-        String temp = "";
-        for (Value chunk : chunkList){ //getting all different filenames from the chunkList received
-            System.out.println("----Received chunk: " + chunk); //ISSUE WHEN WE HAVE 2 DIFFERENT FILES WITH THE SAME NAME
-            String chunkName = chunk.getFilename();
-            String filename = chunkName.substring(0, chunkName.indexOf("_"));
-            String fileExt = chunkName.substring(chunkName.indexOf("."));
-            if(!temp.contains(filename)){
-                temp = filename;
-                filenames.add(filename + fileExt);
+    private synchronized void writeFilesByID(List<Value> chunkList){ //withdrawal and writing of files from the
+        System.out.println(chunkList);
+        String temp ="";
+        List<String> fileIDs = new ArrayList<>();
+        for (Value chunk : chunkList) { //separating chunks by file id
+            if (!chunk.getFileID().equalsIgnoreCase(temp)) {
+                fileIDs.add(chunk.getFileID());
+                temp = chunk.getFileID();
             }
         }
-        for (String filename : filenames) { //for each filename create a file on the download path
-            System.out.println("----Found name: " + filename);
-            Value[] sortedChunks = sortChunks(filename, chunkList); //sort all chunks for the filename
-            System.out.println(Arrays.toString(sortedChunks));
-            File download = new File(downloadPath + sortedChunks[0].getProfile().getUsername() + "_" + filename);
+        for (String id : fileIDs){ //for each id we keep the chunks in a list
+            System.out.println(id);
+            List <Value> filelist = new ArrayList<>();
+            for (Value chunk : chunkList){
+                if (id.equalsIgnoreCase(chunk.getFileID())){
+                    filelist.add(chunk);
+                }
+            }
+            Value[] sortedChunks = new Value[filelist.size()];
+            for (Value chunk : filelist){ //sorting them according to the number on the chunk name
+                int index = parseInt(chunk.getFilename().substring
+                        (chunk.getFilename().indexOf("_") + 1, chunk.getFilename().indexOf("_") + 2));
+                sortedChunks[index] = chunk;
+            }
+            String filename = sortedChunks[0].getFilename().substring(0, sortedChunks[0].getFilename().indexOf("_"));
+            String fileExt = sortedChunks[0].getFilename().substring(sortedChunks[0].getFilename().indexOf("."));
+            Path path = Paths.get(downloadPath + filename + fileExt);
+            int counter = 1;
+            String existString = String.format("(%s)", counter);
+            while (Files.exists(path)){ //if file exists loop with a counter and change filename to filename%counter%.extension
+                path = Paths.get(downloadPath + filename + existString + fileExt);
+                counter++;
+            }
+            File download = new File(String.valueOf(path)); //writing file
+            System.out.println("SYSTEM: Downloading file at: " + path);
             try {
                 FileOutputStream os = new FileOutputStream(download);
                 for (Value chunk : sortedChunks) {
@@ -137,27 +155,9 @@ public class Consumer extends UserNode implements Runnable,Serializable {
                 }
                 os.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
                 disconnect();
             }
         }
-    }
-
-
-
-    private Value[] sortChunks(String filename, List<Value> chunks){ //retrieving and sorting chunks
-        List<Value> filenameChunks = new ArrayList<>(); // for a specific filename
-        for (Value chunk : chunks) {
-            if (chunk.getFilename().startsWith(filename.substring(0, filename.indexOf(".")))){
-                filenameChunks.add(chunk);
-            }
-        }
-        Value[] sortedChunks = new Value[filenameChunks.size()];
-        for (Value chunk : filenameChunks){
-            int index = parseInt(chunk.getFilename().substring(chunk.getFilename().indexOf("_") + 1,
-                    chunk.getFilename().indexOf("_") + 2) );
-            sortedChunks[index] = chunk;
-        }
-        return sortedChunks;
     }
 }

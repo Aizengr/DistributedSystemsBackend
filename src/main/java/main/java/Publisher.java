@@ -53,11 +53,12 @@ public class Publisher extends UserNode implements Runnable,Serializable {
 
     public synchronized void pushChunks(String topic, MultimediaFile file){ //splitting in chunks and pushing each one
         List<byte[]> chunkList = file.splitInChunks();
+        String fileID = file.getFileID();
         Value chunk;
         for (int i = 0; i < chunkList.size(); i++) { //get all byte arrays, create chunk name and value obj
             StringBuilder strB = new StringBuilder(file.getFileName());
             String chunkName = strB.insert(file.getFileName().lastIndexOf("."), String.format("_%s", i)).toString();
-            chunk = new Value("Sending file chunk", chunkName, this.profile, topic,
+            chunk = new Value("Sending file chunk", chunkName, this.profile, topic, fileID,
                     file.getNumberOfChunks() - i - 1, chunkList.get(i), pubRequest);
             push(topic, chunk);
         }
@@ -76,7 +77,7 @@ public class Publisher extends UserNode implements Runnable,Serializable {
             if (response != socket.getPort()){ //if we are not connected to the right one, switch conn
                 System.out.println("SYSTEM: Switching Publisher connection to another broker on port: " + response);
                 connect(response);
-                push(topic, value);
+                push(topic,value);
             }
         } catch (IOException | ClassNotFoundException e) {
             System.out.println(e.getMessage());

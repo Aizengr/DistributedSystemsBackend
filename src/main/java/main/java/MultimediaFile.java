@@ -9,10 +9,11 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class MultimediaFile implements Serializable {
 
-    private String dateCreated,fileName,fileType;
+    private String dateCreated,fileName,fileType, fileID;
     private Path path;
     private File multimediaFile;
     private int numberOfChunks;
@@ -25,6 +26,7 @@ public class MultimediaFile implements Serializable {
         this.fileName = multimediaFile.getName();
         this.setData();
         this.setFileType();
+        this.fileID = UUID.randomUUID().toString();
     }
 
     private void setData() { //method for file attributes to set date (or more if needed)
@@ -108,4 +110,6 @@ public class MultimediaFile implements Serializable {
     public void increaseNumberOfChunks(){this.numberOfChunks++;}
 
     public int getNumberOfChunks(){return this.numberOfChunks;}
+
+    public String getFileID(){ return this.fileID;}
 }

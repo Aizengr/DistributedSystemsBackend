@@ -103,7 +103,6 @@ public class ClientHandler implements Runnable,Serializable {
             }
         }
     }
-
     private synchronized void sendCorrectBroker(int port){
         try {
             out.writeObject(port); //sending correct broker port to UserNode
