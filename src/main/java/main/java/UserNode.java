@@ -19,10 +19,10 @@ public class UserNode implements Serializable {
     protected ObjectInputStream objectInputStream;
     protected Scanner inputScanner;
 
-    private static final int[] portNumbers = new int[]{3000};
-    private static HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresses
-    private static HashMap<Integer,Integer> availableBrokers =  new HashMap<>(); //ids, ports
-    private static List<String> availableTopics = new ArrayList<>();
+    protected static final int[] portNumbers = new int[]{3000};
+    protected static HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresses
+    protected static HashMap<Integer,Integer> availableBrokers =  new HashMap<>(); //ids, ports
+    protected static List<String> availableTopics = new ArrayList<>();
 
     protected ArrayList<Publisher> alivePublisherConnections;
     protected ArrayList<Consumer> aliveConsumerConnections;
@@ -39,7 +39,6 @@ public class UserNode implements Serializable {
     public UserNode(int port, Profile profile) { //user node initialization
         this.currentPort = port;
         this.profile = profile;
-        readConfig(System.getProperty("user.dir").concat("\\src\\main\\java\\main\\java\\config.txt"));
         alivePublisherConnections = new ArrayList<>();
         aliveConsumerConnections = new ArrayList<>();
     }
@@ -189,7 +188,7 @@ public class UserNode implements Serializable {
         disconnectConsumers();
     }
 
-    private void readConfig(String path){ //reading ports, hostnames and topics from config file
+    private static void readConfig(String path){ //reading ports, hostnames and topics from config file
         File file = new File(path); //same method on both brokers and user node
         try {
             Scanner reader = new Scanner(file);
@@ -215,6 +214,7 @@ public class UserNode implements Serializable {
 
     public static void main(String[] args) { //running UserNode
 
+        UserNode.readConfig(System.getProperty("user.dir").concat("\\src\\main\\java\\main\\java\\config.txt"));;
         Profile profile = new Profile("Nikolas");
         Publisher kostaspub = new Publisher(profile);
         Consumer kostascon = new Consumer(profile);

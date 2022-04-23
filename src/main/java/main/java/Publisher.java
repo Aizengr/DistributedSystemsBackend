@@ -43,7 +43,7 @@ public class Publisher extends UserNode implements Runnable,Serializable {
             }
             else {
                 Value messageValue = new Value(messageToSend, this.profile ,topic, pubRequest);
-                push(topic, messageValue);
+                push(messageValue);
             }
             if (checkForNewContent()){ //if a new file is added to profile we also push it
                 MultimediaFile uploadedFile = getNewContent();
@@ -61,30 +61,46 @@ public class Publisher extends UserNode implements Runnable,Serializable {
             String chunkName = strB.insert(file.getFileName().lastIndexOf("."), String.format("_%s", i)).toString();
             chunk = new Value("Sending file chunk", chunkName, this.profile, topic, fileID,
                     file.getNumberOfChunks() - i - 1, chunkList.get(i), pubRequest);
-            push(topic, chunk);
+            push(chunk);
         }
     }
-
-    public synchronized String searchTopic(){ //initial search topic function
-        String topic = consoleInput("Please enter publisher topic: ");
-        if(!profile.checkSub(topic)){          //check if subbed
-            profile.sub(topic); //we sub to the topic as well
-            System.out.printf("Subbed to topic:%s %n\n", topic);
-        }
-        Value value = new Value("search", this.profile, pubRequest);
+    private synchronized int checkBroker(String topic){ //checking if we are on the correct broker
+        int response = 0;
         try {
-            push(topic, value);
-            int response = (int)objectInputStream.readObject(); //asking and receiving port number for correct Broker based on the topic
-            if (response != socket.getPort()){ //if we are not connected to the right one, switch conn
-                System.out.println("SYSTEM: Switching Publisher connection to another broker on port: " + response);
-                connect(response);
-                Value initMessage = new Value("Connection", this.profile, "Consumer");
-                objectOutputStream.writeObject(initMessage);
-                push(topic,value);
-            }
+            objectOutputStream.writeObject(topic);
+            objectOutputStream.flush();
+            response = (int)objectInputStream.readObject();
         } catch (IOException | ClassNotFoundException e) {
             System.out.println(e.getMessage());
             disconnect();
+        }
+        return response;
+    }
+
+    public synchronized String searchTopic() { //initial search topic function
+        String topic = null;
+        while(true) {
+            topic = consoleInput("Please enter publisher topic: ");
+            int response = checkBroker(topic); //asking and receiving port number for correct Broker based on the topic
+            if (response == 0) {
+                System.out.println("There is no existing topic named: " + topic +". Here are available ones: " + availableTopics);
+            } else if (response != socket.getPort()) { //if we are not connected to the right one, switch conn
+                System.out.println("SYSTEM: Switching Publisher connection to another broker on port: " + response);
+                connect(response);
+                Value initMessage = new Value("Connection", this.profile, "Consumer");
+                try {
+                    objectOutputStream.writeObject(initMessage);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                break;
+            } else {
+                if (!profile.checkSub(topic)) {          //check if subbed
+                    profile.sub(topic); //we sub to the topic as well
+                    System.out.printf("Subbed to topic:%s %n\n", topic);
+                }
+                break;
+            }
         }
         return topic;
     }
@@ -97,15 +113,11 @@ public class Publisher extends UserNode implements Runnable,Serializable {
     private MultimediaFile getNewContent(){ //gets first item in upload Q
         return this.profile.getFileFromUploadQueue();
     }
-
-
-    public synchronized void push(String topic, Value value){ //initial push
+    public synchronized void push(Value value){ //initial push
 
         try {
-            System.out.printf("Trying to push to topic: %s with value: %s%n\n", topic , value);
+            System.out.printf("Trying to push to topic: %s with value: %s%n\n", value.getTopic() , value);
             if (value.getMessage() != null){
-                objectOutputStream.writeObject(topic); // if value is not null write to stream
-                objectOutputStream.flush();
                 objectOutputStream.writeObject(value); // if value is not null write to stream
                 objectOutputStream.flush();
             }

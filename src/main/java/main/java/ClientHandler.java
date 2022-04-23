@@ -47,15 +47,19 @@ public class ClientHandler implements Runnable,Serializable {
 
 
     @Override
-    public void run() {
+   /* public void run() {
         Object streamObject;
         while(!socket.isClosed()){
             streamObject = readStream();
             if(streamObject!=null){
                 System.out.println("SYSTEM: Received object: " + streamObject);
                 if (streamObject instanceof String topic) {
-                    int correctPort = Broker.searchBroker(topic);
-                    sendCorrectBroker(correctPort);
+                    int correctPort = -1;
+                    while (correctPort<=0){ //while provided topic does not exist, we continuously ask for a valid one from component
+                        correctPort = Broker.searchBroker(topic);
+                        sendCorrectBroker(correctPort);
+                        topic = (String)readStream();
+                    }
                     if (correctPort == this.socket.getLocalPort()){
                         Value value = (Value) readStream();
                         if (value != null) {
@@ -100,6 +104,66 @@ public class ClientHandler implements Runnable,Serializable {
                     }
                 }
             }
+        }
+    } */
+
+    public void run() {
+        Object streamObject = readStream();
+        int correctPort = -1;
+        if (streamObject instanceof String topic) {
+            while (correctPort <= 0) { //while provided topic does not exist, we continuously ask for a valid one from component
+                correctPort = Broker.searchBroker(topic);
+                sendCorrectBroker(correctPort);
+                if (correctPort <= 0) {
+                    topic = (String) readStream();
+                }
+            }
+        }
+        if (correctPort == this.socket.getLocalPort()) {
+            while (!socket.isClosed()) {
+                Value value = (Value) readStream();
+                System.out.println(value);
+                if (value != null) {
+                    if (value.getMessage().equalsIgnoreCase("connection")) {
+                        if (value.getRequestType().equalsIgnoreCase("Publisher")) {
+                            connectedPublishers.add(this); //keeping only alive publishers
+                        } else if (value.getRequestType().equalsIgnoreCase("Consumer")) {
+                            connectedConsumers.add(this); //keeping only alive consumers
+                        }
+                        this.username = value.getUsername();
+                    } else if (value.getRequestType().equalsIgnoreCase("Publisher")) {
+                        Profile userProfile = value.getProfile();
+                        checkPublisher(userProfile, value.getTopic());
+                        if (!value.isFile()) {
+                            messagesMap.put(value.getTopic(), value); //live message broadcasting to all connected consumers
+                            broadcastMessage(value.getTopic(), value);
+                        } else {
+                            List<Value> chunkList = new ArrayList<>(); // live file sharing to all connected consumers
+                            while (value.getRemainingChunks() >= 0) {
+                                try {
+                                    messagesMap.put(value.getTopic(), value);
+                                    chunkList.add(value);
+                                    if (value.getRemainingChunks() == 0) {
+                                        break;
+                                    }
+                                    value = (Value) in.readObject(); // as we also push topic
+                                    System.out.println(value.getTopic());
+                                    System.out.println(value);
+                                } catch (IOException | ClassNotFoundException e) {
+                                    System.out.println(e.getMessage());
+                                }
+                            }
+                            broadcastFile(value.getTopic(), chunkList);
+                        }
+                    } else if (value.getRequestType().equalsIgnoreCase("Consumer") && value.getMessage().equalsIgnoreCase("datareq")) { //initial case
+                        checkConsumer(value.getProfile(), value.getTopic());
+                        pull(value.getTopic());
+                    }
+                }
+            }
+        }else{
+            checkRemoveConsumer(correctPort); //check and remove consumer from alive connections
+            checkRemovePublisher(correctPort); //in case of redirecting to another broker
         }
     }
 

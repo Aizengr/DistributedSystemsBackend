@@ -4,7 +4,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import static java.lang.Integer.parseInt;
 
@@ -36,7 +35,10 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         if (topic != null) {
             while (true){
                 int response = checkBroker(topic);
-                if (response != socket.getPort()) {
+                if (response == 0) { //not existing topic case
+                    System.out.println("There is no existing topic named: " + topic +". Here are available ones: " + availableTopics);
+                    topic = consoleInput("Please enter consumer topic: ");
+                } else if (response != socket.getPort()) { //incorrect port
                     System.out.println("SYSTEM: Switching Consumer connection to another broker on port: " + response);
                     connect(response);
                     Value initMessage = new Value("Connection", this.profile, "Consumer");
@@ -45,7 +47,8 @@ public class Consumer extends UserNode implements Runnable,Serializable {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                } else break;
+                    break;
+                } else break; //correct port
             }
             List<Value> data = getConversationData(topic); //getting conversation data at first
             List<Value> chunkList = new ArrayList<>(); //separating chunks from live messages
@@ -91,7 +94,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
 
     private synchronized List<Value> getConversationData(String topic){
         List<Value> data = new ArrayList<>();
-        Value value = new Value("dataRequest", this.profile, topic, conRequest);
+        Value value = new Value("datareq", this.profile, topic, conRequest);
         try {
             objectOutputStream.writeObject(value);
             objectOutputStream.flush();
