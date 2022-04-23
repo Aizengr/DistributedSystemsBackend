@@ -12,7 +12,8 @@ public class Publisher extends UserNode implements Runnable,Serializable {
         super(profile);
         connect(currentPort);
         try {
-            objectOutputStream.writeObject("Publisher");
+            Value initMessage = new Value("Connection", this.profile, "Publisher");
+            objectOutputStream.writeObject(initMessage);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -77,6 +78,8 @@ public class Publisher extends UserNode implements Runnable,Serializable {
             if (response != socket.getPort()){ //if we are not connected to the right one, switch conn
                 System.out.println("SYSTEM: Switching Publisher connection to another broker on port: " + response);
                 connect(response);
+                Value initMessage = new Value("Connection", this.profile, "Consumer");
+                objectOutputStream.writeObject(initMessage);
                 push(topic,value);
             }
         } catch (IOException | ClassNotFoundException e) {

@@ -49,8 +49,6 @@ public class UserNode implements Serializable {
         return portNumbers[new Random().nextInt(portNumbers.length)];
 
     }
-
-
     private static Profile createProfile(){ //creates a noUsername empty profile
         return new Profile("NoUsername");
     } //creates a noUsername prof
@@ -217,7 +215,7 @@ public class UserNode implements Serializable {
 
     public static void main(String[] args) { //running UserNode
 
-        Profile profile = new Profile("Kostas");
+        Profile profile = new Profile("Nikolas");
         Publisher kostaspub = new Publisher(profile);
         Consumer kostascon = new Consumer(profile);
         Thread pub = new Thread(kostaspub); //initiating both on random port

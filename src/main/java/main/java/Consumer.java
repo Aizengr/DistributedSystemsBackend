@@ -15,7 +15,8 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         super(profile);
         connect(currentPort);
         try {
-            objectOutputStream.writeObject("Consumer");
+            Value initMessage = new Value("Connection", this.profile, "Consumer");
+            objectOutputStream.writeObject(initMessage);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -38,6 +39,12 @@ public class Consumer extends UserNode implements Runnable,Serializable {
                 if (response != socket.getPort()) {
                     System.out.println("SYSTEM: Switching Consumer connection to another broker on port: " + response);
                     connect(response);
+                    Value initMessage = new Value("Connection", this.profile, "Consumer");
+                    try {
+                        objectOutputStream.writeObject(initMessage);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 } else break;
             }
             List<Value> data = getConversationData(topic); //getting conversation data at first

@@ -13,7 +13,10 @@ import java.util.UUID;
 
 public class MultimediaFile implements Serializable {
 
-    private String dateCreated,fileName,fileType, fileID;
+    private String dateCreated;
+    private String fileName;
+    private String fileType;
+    private final String fileID;
     private Path path;
     private File multimediaFile;
     private int numberOfChunks;

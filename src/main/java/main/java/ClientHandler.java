@@ -32,13 +32,14 @@ public class ClientHandler implements Runnable,Serializable {
             this.out = new ObjectOutputStream(socket.getOutputStream());
             this.in = new ObjectInputStream(socket.getInputStream());
             clientHandlers.add(this); //keeping all connections
-            String id = (String)in.readObject();
-            if (id.equalsIgnoreCase("Publisher")) {
+            Value initMessage = (Value)in.readObject();
+            if (initMessage.getRequestType().equalsIgnoreCase("Publisher")) {
                 connectedPublishers.add(this); //keeping only alive publishers
             }
-            else if (id.equalsIgnoreCase("Consumer")){
+            else if (initMessage.getRequestType().equalsIgnoreCase("Consumer")){
                 connectedConsumers.add(this); //keeping only alive consumers
             }
+            this.username = initMessage.getUsername();
         } catch (IOException | ClassNotFoundException e) {
             closeEverything(socket, out, in);
         }
@@ -58,9 +59,6 @@ public class ClientHandler implements Runnable,Serializable {
                     if (correctPort == this.socket.getLocalPort()){
                         Value value = (Value) readStream();
                         if (value != null) {
-                            if (this.username == null) { //we set the username for the client handler on first value object we receive
-                                this.username = value.getProfile().getUsername();
-                            }
                             System.out.println(value);
                             if (value.getRequestType().equalsIgnoreCase("Publisher")
                                     && value.getMessage().equalsIgnoreCase("search")) {  //initial Search case
@@ -97,12 +95,32 @@ public class ClientHandler implements Runnable,Serializable {
                         }
                     }
                     else {
-                        System.out.println("SYSTEM: Redirecting component to broker on port: " + correctPort);
+                        checkRemoveConsumer(correctPort); //check and remove consumer from alive connections
+                        checkRemovePublisher(correctPort); //in case of redirecting to another broker
                     }
                 }
             }
         }
     }
+
+
+    public void checkRemoveConsumer(int port){
+        if (connectedConsumers.contains(this)){
+            System.out.println("SYSTEM: Redirecting consumer of: " + this.getUsername()
+                    + "to Broker on port: " + port);
+            connectedConsumers.remove(this);
+        }
+    }
+
+    public void checkRemovePublisher(int port){
+        if (connectedPublishers.contains(this)){
+            System.out.println("SYSTEM: Redirecting publisher of: " + this.getUsername()
+                    + "to Broker on port: " + port);
+            connectedConsumers.remove(this);
+        }
+    }
+
+
     private synchronized void sendCorrectBroker(int port){
         try {
             out.writeObject(port); //sending correct broker port to UserNode
