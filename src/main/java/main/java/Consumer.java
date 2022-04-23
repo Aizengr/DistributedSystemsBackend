@@ -41,15 +41,15 @@ public class Consumer extends UserNode implements Runnable,Serializable {
                 } else break;
             }
             List<Value> data = getConversationData(topic); //getting conversation data at first
-            List<Value> chunkList = new ArrayList<>();
+            List<Value> chunkList = new ArrayList<>(); //separating chunks from live messages
             for (Value message : data) {
                 if (message.isFile()) {
                     chunkList.add(message);
-                    writeFilesByID(chunkList);
                 } else {
                     System.out.println(message.getProfile().getUsername() + ": " + message.getMessage());
                 }
             }
+            writeFilesByID(chunkList); //sorting and writing files
             while (!socket.isClosed()) {
                 listenForMessage(); //listening for messages
             }
@@ -123,14 +123,15 @@ public class Consumer extends UserNode implements Runnable,Serializable {
                 temp = chunk.getFileID();
             }
         }
+        System.out.println(fileIDs);
         for (String id : fileIDs){ //for each id we keep the chunks in a list
-            System.out.println(id);
             List <Value> filelist = new ArrayList<>();
             for (Value chunk : chunkList){
                 if (id.equalsIgnoreCase(chunk.getFileID())){
                     filelist.add(chunk);
                 }
             }
+            System.out.println(filelist);
             Value[] sortedChunks = new Value[filelist.size()];
             for (Value chunk : filelist){ //sorting them according to the number on the chunk name
                 int index = parseInt(chunk.getFilename().substring
@@ -141,8 +142,10 @@ public class Consumer extends UserNode implements Runnable,Serializable {
             String fileExt = sortedChunks[0].getFilename().substring(sortedChunks[0].getFilename().indexOf("."));
             Path path = Paths.get(downloadPath + filename + fileExt);
             int counter = 1;
-            String existString = String.format("(%s)", counter);
+            String existString;
             while (Files.exists(path)){ //if file exists loop with a counter and change filename to filename%counter%.extension
+                System.out.println(path);
+                existString = String.format("(%s)", counter);
                 path = Paths.get(downloadPath + filename + existString + fileExt);
                 counter++;
             }
