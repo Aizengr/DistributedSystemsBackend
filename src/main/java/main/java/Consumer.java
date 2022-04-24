@@ -12,19 +12,13 @@ public class Consumer extends UserNode implements Runnable,Serializable {
 
     public Consumer(Profile profile){
         super(profile);
-        connect(currentPort);
-        try {
-            Value initMessage = new Value("Connection", this.profile, "Consumer");
-            objectOutputStream.writeObject(initMessage);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        connect(currentPort, conRequest);
         aliveConsumerConnections.add(this);
     }
 
     public Consumer(int port, Profile profile){
         super(port, profile);
-        connect(currentPort);
+        connect(currentPort, conRequest);
         aliveConsumerConnections.add(this);
     }
 
@@ -35,19 +29,12 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         if (topic != null) {
             while (true){
                 int response = checkBroker(topic);
-                if (response == 0) { //not existing topic case
+                if (response == 0) { //non-existing topic case
                     System.out.println("There is no existing topic named: " + topic +". Here are available ones: " + availableTopics);
                     topic = consoleInput("Please enter consumer topic: ");
                 } else if (response != socket.getPort()) { //incorrect port
                     System.out.println("SYSTEM: Switching Consumer connection to another broker on port: " + response);
-                    connect(response);
-                    Value initMessage = new Value("Connection", this.profile, "Consumer");
-                    try {
-                        objectOutputStream.writeObject(initMessage);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    break;
+                    connect(response,conRequest);
                 } else break; //correct port
             }
             List<Value> data = getConversationData(topic); //getting conversation data at first
@@ -123,8 +110,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         return response;
     }
 
-    private synchronized void writeFilesByID(List<Value> chunkList){ //withdrawal and writing of files from the
-        System.out.println(chunkList);
+    private synchronized void writeFilesByID(List<Value> chunkList){ //withdrawal and writing of all files received
         String temp ="";
         List<String> fileIDs = new ArrayList<>();
         for (Value chunk : chunkList) { //separating chunks by file id
@@ -133,17 +119,16 @@ public class Consumer extends UserNode implements Runnable,Serializable {
                 temp = chunk.getFileID();
             }
         }
-        System.out.println(fileIDs);
         for (String id : fileIDs){ //for each id we keep the chunks in a list
-            List <Value> filelist = new ArrayList<>();
+            List <Value> fileList = new ArrayList<>();
             for (Value chunk : chunkList){
                 if (id.equalsIgnoreCase(chunk.getFileID())){
-                    filelist.add(chunk);
+                    fileList.add(chunk);
                 }
             }
-            System.out.println(filelist);
-            Value[] sortedChunks = new Value[filelist.size()];
-            for (Value chunk : filelist){ //sorting them according to the number on the chunk name
+            System.out.println(fileList);
+            Value[] sortedChunks = new Value[fileList.size()];
+            for (Value chunk : fileList){ //sorting them according to the number on the chunk name
                 int index = parseInt(chunk.getFilename().substring
                         (chunk.getFilename().indexOf("_") + 1, chunk.getFilename().indexOf("_") + 2));
                 sortedChunks[index] = chunk;

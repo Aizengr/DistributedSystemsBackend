@@ -109,6 +109,7 @@ public class ClientHandler implements Runnable,Serializable {
 
     public void run() {
         Object streamObject = readStream();
+        System.out.println(streamObject);
         int correctPort = -1;
         if (streamObject instanceof String topic) {
             while (correctPort <= 0) { //while provided topic does not exist, we continuously ask for a valid one from component
@@ -124,14 +125,7 @@ public class ClientHandler implements Runnable,Serializable {
                 Value value = (Value) readStream();
                 System.out.println(value);
                 if (value != null) {
-                    if (value.getMessage().equalsIgnoreCase("connection")) {
-                        if (value.getRequestType().equalsIgnoreCase("Publisher")) {
-                            connectedPublishers.add(this); //keeping only alive publishers
-                        } else if (value.getRequestType().equalsIgnoreCase("Consumer")) {
-                            connectedConsumers.add(this); //keeping only alive consumers
-                        }
-                        this.username = value.getUsername();
-                    } else if (value.getRequestType().equalsIgnoreCase("Publisher")) {
+                    if (value.getRequestType().equalsIgnoreCase("Publisher")) {
                         Profile userProfile = value.getProfile();
                         checkPublisher(userProfile, value.getTopic());
                         if (!value.isFile()) {
@@ -171,7 +165,7 @@ public class ClientHandler implements Runnable,Serializable {
     public void checkRemoveConsumer(int port){
         if (connectedConsumers.contains(this)){
             System.out.println("SYSTEM: Redirecting consumer of: " + this.getUsername()
-                    + "to Broker on port: " + port);
+                    + " to Broker on port: " + port);
             connectedConsumers.remove(this);
         }
     }
@@ -179,7 +173,7 @@ public class ClientHandler implements Runnable,Serializable {
     public void checkRemovePublisher(int port){
         if (connectedPublishers.contains(this)){
             System.out.println("SYSTEM: Redirecting publisher of: " + this.getUsername()
-                    + "to Broker on port: " + port);
+                    + " to Broker on port: " + port);
             connectedConsumers.remove(this);
         }
     }

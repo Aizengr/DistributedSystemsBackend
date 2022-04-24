@@ -10,27 +10,22 @@ public class Publisher extends UserNode implements Runnable,Serializable {
 
     public Publisher(Profile profile){
         super(profile);
-        connect(currentPort);
-        try {
-            Value initMessage = new Value("Connection", this.profile, "Publisher");
-            objectOutputStream.writeObject(initMessage);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        connect(currentPort, pubRequest);
         alivePublisherConnections.add(this);
     }
 
     public Publisher(int port, Profile profile){
         super(port, profile);
-        connect(currentPort);
+        connect(currentPort, pubRequest);
         alivePublisherConnections.add(this);
     }
 
     @Override
     public void run() {
         System.out.println("Publisher established connection with Broker on port: " + this.socket.getPort());
-        String topic = searchTopic();
-        while(!socket.isClosed()) {
+        String topic = consoleInput("Please enter publisher topic: ");
+        topic = searchTopic(topic);
+        while(!socket.isClosed()){
             String messageToSend = consoleInput();
             if (messageToSend.equalsIgnoreCase("file")) { //type file to initiate file upload
             System.out.println("Please give full file path: \n");
@@ -77,26 +72,17 @@ public class Publisher extends UserNode implements Runnable,Serializable {
         return response;
     }
 
-    public synchronized String searchTopic() { //initial search topic function
-        String topic = null;
+    public String searchTopic(String topic) { //initial search
         while(true) {
-            topic = consoleInput("Please enter publisher topic: ");
             int response = checkBroker(topic); //asking and receiving port number for correct Broker based on the topic
             if (response == 0) {
                 System.out.println("There is no existing topic named: " + topic +". Here are available ones: " + availableTopics);
             } else if (response != socket.getPort()) { //if we are not connected to the right one, switch conn
                 System.out.println("SYSTEM: Switching Publisher connection to another broker on port: " + response);
-                connect(response);
-                Value initMessage = new Value("Connection", this.profile, "Consumer");
-                try {
-                    objectOutputStream.writeObject(initMessage);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                break;
+                connect(response, pubRequest);
             } else {
-                if (!profile.checkSub(topic)) {          //check if subbed
-                    profile.sub(topic); //we sub to the topic as well
+                if (!profile.checkSub(topic)) { //check if subbed
+                    profile.sub(topic);
                     System.out.printf("Subbed to topic:%s %n\n", topic);
                 }
                 break;

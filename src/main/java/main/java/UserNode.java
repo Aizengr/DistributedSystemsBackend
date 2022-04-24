@@ -69,12 +69,18 @@ public class UserNode implements Serializable {
         return input;
     }
 
-    protected void connect(int port){
+    protected void connect(int port, String type){
         try{
             this.socket = new Socket( "localhost", port);
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
             this.inputScanner = new Scanner(System.in);
+            try { //initial connection request for both publisher and consumer
+                Value initMessage = new Value("Connection", this.profile, type);
+                objectOutputStream.writeObject(initMessage);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         } catch (IOException e) {
             disconnect();
         }
@@ -214,7 +220,7 @@ public class UserNode implements Serializable {
 
     public static void main(String[] args) { //running UserNode
 
-        UserNode.readConfig(System.getProperty("user.dir").concat("\\src\\main\\java\\main\\java\\config.txt"));;
+        UserNode.readConfig(System.getProperty("user.dir").concat("\\src\\main\\java\\main\\java\\config.txt"));
         Profile profile = new Profile("Nikolas");
         Publisher kostaspub = new Publisher(profile);
         Consumer kostascon = new Consumer(profile);
