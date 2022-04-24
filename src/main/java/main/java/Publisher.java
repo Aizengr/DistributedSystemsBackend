@@ -77,6 +77,7 @@ public class Publisher extends UserNode implements Runnable,Serializable {
             int response = checkBroker(topic); //asking and receiving port number for correct Broker based on the topic
             if (response == 0) {
                 System.out.println("There is no existing topic named: " + topic +". Here are available ones: " + availableTopics);
+                topic = consoleInput("Please enter publisher topic: ");
             } else if (response != socket.getPort()) { //if we are not connected to the right one, switch conn
                 System.out.println("SYSTEM: Switching Publisher connection to another broker on port: " + response);
                 connect(response, pubRequest);
