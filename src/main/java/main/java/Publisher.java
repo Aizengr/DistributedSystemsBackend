@@ -22,28 +22,30 @@ public class Publisher extends UserNode implements Runnable,Serializable {
 
     @Override
     public void run() {
-        System.out.println("Publisher established connection with Broker on port: " + this.socket.getPort());
-        String topic = consoleInput("Please enter publisher topic: ");
-        topic = searchTopic(topic);
-        while(!socket.isClosed()){
-            String messageToSend = consoleInput();
-            if (messageToSend.equalsIgnoreCase("file")) { //type file to initiate file upload
-            System.out.println("Please give full file path: \n");
-            String path = this.inputScanner.nextLine();
-            MultimediaFile file = new MultimediaFile(path);
-            this.profile.addFileToProfile(file.getFileName(),file); //adding file to profile
+        if (this.socket != null) {
+            System.out.println("Publisher established connection with Broker on port: " + this.socket.getPort());
+            String topic = consoleInput("Please enter publisher topic: ");
+            topic = searchTopic(topic);
+            while (!socket.isClosed()) {
+                String messageToSend = consoleInput();
+                if (messageToSend.equalsIgnoreCase("file")) { //type file to initiate file upload
+                    System.out.println("Please give full file path: \n");
+                    String path = this.inputScanner.nextLine();
+                    MultimediaFile file = new MultimediaFile(path);
+                    this.profile.addFileToProfile(file.getFileName(), file); //adding file to profile
+                } else if (messageToSend.equalsIgnoreCase("exit")) { //exit for dc
+                    disconnectComponents(this.currentPort);
+                } else {
+                    Value messageValue = new Value(messageToSend, this.profile, topic, pubRequest);
+                    push(messageValue);
+                }
+                if (checkForNewContent()) { //if a new file is added to profile we also push it
+                    MultimediaFile uploadedFile = getNewContent();
+                    pushChunks(topic, uploadedFile);
+                }
             }
-            else if(messageToSend.equalsIgnoreCase("exit")) { //exit for dc
-                disconnectComponents(this.currentPort);
-            }
-            else {
-                Value messageValue = new Value(messageToSend, this.profile ,topic, pubRequest);
-                push(messageValue);
-            }
-            if (checkForNewContent()){ //if a new file is added to profile we also push it
-                MultimediaFile uploadedFile = getNewContent();
-                pushChunks(topic,uploadedFile);
-            }
+        } else {
+            System.out.println("Publisher exiting...");
         }
     }
 

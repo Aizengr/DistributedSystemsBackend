@@ -52,7 +52,7 @@ public class UserNode implements Serializable {
         return new Profile("NoUsername");
     } //creates a noUsername prof
 
-    protected synchronized String consoleInput(String message){
+    protected String consoleInput(String message){
         System.out.println(message);
         String input = null;
         if (this.inputScanner.hasNextLine()) {
@@ -61,7 +61,7 @@ public class UserNode implements Serializable {
         return input;
     }
 
-    protected synchronized String consoleInput(){
+    protected String consoleInput(){
         String input = null;
         if (this.inputScanner.hasNextLine()) {
             input = this.inputScanner.nextLine();
@@ -82,7 +82,11 @@ public class UserNode implements Serializable {
                 throw new RuntimeException(e);
             }
         } catch (IOException e) {
-            disconnect();
+            if (e.getMessage().equalsIgnoreCase("Connection refused: connect")){
+                System.out.println( type + " connection failed. Broker at port: "
+                        + port + " is currently unavailable.");
+                disconnectAll();
+            }
         }
     }
 

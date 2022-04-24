@@ -24,32 +24,36 @@ public class Consumer extends UserNode implements Runnable,Serializable {
 
     @Override
     public void run() {
-        System.out.println("Consumer established connection with Broker on port: " + this.socket.getPort());
-        String topic = consoleInput("Please enter consumer topic: ");
-        if (topic != null) {
-            while (true){
-                int response = checkBroker(topic);
-                if (response == 0) { //non-existing topic case
-                    System.out.println("There is no existing topic named: " + topic +". Here are available ones: " + availableTopics);
-                    topic = consoleInput("Please enter consumer topic: ");
-                } else if (response != socket.getPort()) { //incorrect port
-                    System.out.println("SYSTEM: Switching Consumer connection to another broker on port: " + response);
-                    connect(response,conRequest);
-                } else break; //correct port
-            }
-            List<Value> data = getConversationData(topic); //getting conversation data at first
-            List<Value> chunkList = new ArrayList<>(); //separating chunks from live messages
-            for (Value message : data) {
-                if (message.isFile()) {
-                    chunkList.add(message);
-                } else {
-                    System.out.println(message.getProfile().getUsername() + ": " + message.getMessage());
+        if (this.socket != null) {
+            System.out.println("Consumer established connection with Broker on port: " + this.socket.getPort());
+            String topic = consoleInput("Please enter consumer topic: ");
+            if (topic != null) {
+                while (true) {
+                    int response = checkBroker(topic);
+                    if (response == 0) { //non-existing topic case
+                        System.out.println("There is no existing topic named: " + topic + ". Here are available ones: " + availableTopics);
+                        topic = consoleInput("Please enter consumer topic: ");
+                    } else if (response != socket.getPort()) { //incorrect port
+                        System.out.println("SYSTEM: Switching Consumer connection to another broker on port: " + response);
+                        connect(response, conRequest);
+                    } else break; //correct port
+                }
+                List<Value> data = getConversationData(topic); //getting conversation data at first
+                List<Value> chunkList = new ArrayList<>(); //separating chunks from live messages
+                for (Value message : data) {
+                    if (message.isFile()) {
+                        chunkList.add(message);
+                    } else {
+                        System.out.println(message.getProfile().getUsername() + ": " + message.getMessage());
+                    }
+                }
+                writeFilesByID(chunkList); //sorting and writing files
+                while (!socket.isClosed()) {
+                    listenForMessage(); //listening for messages
                 }
             }
-            writeFilesByID(chunkList); //sorting and writing files
-            while (!socket.isClosed()) {
-                listenForMessage(); //listening for messages
-            }
+        } else {
+            System.out.println("Consumer exiting...");
         }
     }
 
