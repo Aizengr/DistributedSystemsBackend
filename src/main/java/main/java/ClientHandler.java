@@ -44,69 +44,6 @@ public class ClientHandler implements Runnable,Serializable {
             closeEverything(socket, out, in);
         }
     }
-
-
-    @Override
-   /* public void run() {
-        Object streamObject;
-        while(!socket.isClosed()){
-            streamObject = readStream();
-            if(streamObject!=null){
-                System.out.println("SYSTEM: Received object: " + streamObject);
-                if (streamObject instanceof String topic) {
-                    int correctPort = -1;
-                    while (correctPort<=0){ //while provided topic does not exist, we continuously ask for a valid one from component
-                        correctPort = Broker.searchBroker(topic);
-                        sendCorrectBroker(correctPort);
-                        topic = (String)readStream();
-                    }
-                    if (correctPort == this.socket.getLocalPort()){
-                        Value value = (Value) readStream();
-                        if (value != null) {
-                            System.out.println(value);
-                            if (value.getRequestType().equalsIgnoreCase("Publisher")
-                                    && value.getMessage().equalsIgnoreCase("search")) {  //initial Search case
-                                Profile userProfile = value.getProfile();
-                                checkPublisher(userProfile, topic); //consumer and publisher are two different components but
-                                checkConsumer(userProfile, topic); // we assume that if one client is publisher he is also a consumer to the same topic and vice versa
-                            } else if (value.getRequestType().equalsIgnoreCase("Publisher")) {
-                                if (!value.isFile()) {
-                                    messagesMap.put(topic,value); //live message broadcasting to all connected consumers
-                                    broadcastMessage(topic,value);
-                                } else {
-                                    List<Value> chunkList = new ArrayList<>(); // live file sharing to all connected consumers
-                                    while(value.getRemainingChunks() >= 0){
-                                        try {
-                                            messagesMap.put(topic,value);
-                                            chunkList.add(value);
-                                            if (value.getRemainingChunks() == 0){break;}
-                                            topic = (String)in.readObject(); //this is needed
-                                            value = (Value)in.readObject(); // as we also push topic
-                                            System.out.println(topic);
-                                            System.out.println(value);
-                                        } catch (IOException | ClassNotFoundException e) {
-                                            System.out.println(e.getMessage());
-                                        }
-                                    }
-                                    broadcastFile(topic, chunkList);
-                                }
-                            } else if (value.getRequestType().equalsIgnoreCase("Consumer")
-                                    && value.getMessage().equalsIgnoreCase("dataRequest")) { //initial case
-                                checkConsumer(value.getProfile(), value.getTopic());
-                                checkPublisher(value.getProfile(), topic);
-                                pull(value.getTopic());
-                            }
-                        }
-                    }
-                    else {
-                        checkRemoveConsumer(correctPort); //check and remove consumer from alive connections
-                        checkRemovePublisher(correctPort); //in case of redirecting to another broker
-                    }
-                }
-            }
-        }
-    } */
-
     public void run() {
         Object streamObject = readStream();
         System.out.println(streamObject);
@@ -126,8 +63,7 @@ public class ClientHandler implements Runnable,Serializable {
                 System.out.println(value);
                 if (value != null) {
                     if (value.getRequestType().equalsIgnoreCase("Publisher")) {
-                        Profile userProfile = value.getProfile();
-                        checkPublisher(userProfile, value.getTopic());
+                        checkPublisher(value.getProfile(), value.getTopic());
                         if (!value.isFile()) {
                             messagesMap.put(value.getTopic(), value); //live message broadcasting to all connected consumers
                             broadcastMessage(value.getTopic(), value);
@@ -137,9 +73,7 @@ public class ClientHandler implements Runnable,Serializable {
                                 try {
                                     messagesMap.put(value.getTopic(), value);
                                     chunkList.add(value);
-                                    if (value.getRemainingChunks() == 0) {
-                                        break;
-                                    }
+                                    if (value.getRemainingChunks() == 0) {break;}
                                     value = (Value) in.readObject(); // as we also push topic
                                     System.out.println(value.getTopic());
                                     System.out.println(value);
@@ -162,7 +96,7 @@ public class ClientHandler implements Runnable,Serializable {
     }
 
 
-    public void checkRemoveConsumer(int port){
+    private void checkRemoveConsumer(int port){
         if (connectedConsumers.contains(this)){
             System.out.println("SYSTEM: Redirecting consumer of: " + this.getUsername()
                     + " to Broker on port: " + port);
@@ -170,7 +104,7 @@ public class ClientHandler implements Runnable,Serializable {
         }
     }
 
-    public void checkRemovePublisher(int port){
+    private void checkRemovePublisher(int port){
         if (connectedPublishers.contains(this)){
             System.out.println("SYSTEM: Redirecting publisher of: " + this.getUsername()
                     + " to Broker on port: " + port);
