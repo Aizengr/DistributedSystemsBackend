@@ -19,6 +19,8 @@ public class UserNode implements Serializable {
     protected ObjectInputStream objectInputStream;
     protected Scanner inputScanner;
 
+    protected static final Object lock = new Object();
+
     protected static final int[] portNumbers = new int[]{3000};
     protected static HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresses
     protected static HashMap<Integer,Integer> availableBrokers =  new HashMap<>(); //ids, ports
@@ -52,7 +54,7 @@ public class UserNode implements Serializable {
         return new Profile("NoUsername");
     } //creates a noUsername prof
 
-    protected String consoleInput(String message){
+    protected synchronized String consoleInput(String message){
         System.out.println(message);
         String input = null;
         if (this.inputScanner.hasNextLine()) {

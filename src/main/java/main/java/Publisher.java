@@ -23,8 +23,16 @@ public class Publisher extends UserNode implements Runnable,Serializable {
     @Override
     public void run() {
         if (this.socket != null) {
+            String topic;
+            synchronized(lock){
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             System.out.println("Publisher established connection with Broker on port: " + this.socket.getPort());
-            String topic = consoleInput("Please enter publisher topic: ");
+            topic = consoleInput("Please enter publisher topic: ");
             topic = searchTopic(topic);
             while (!socket.isClosed()) {
                 String messageToSend = consoleInput();
