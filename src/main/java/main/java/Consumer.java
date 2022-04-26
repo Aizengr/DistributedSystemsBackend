@@ -25,16 +25,16 @@ public class Consumer extends UserNode implements Runnable,Serializable {
     @Override
     public void run() {
         if (this.socket != null) {
-            System.out.println("Consumer established connection with Broker on port: " + this.socket.getPort());
+            System.out.println("SYSTEM: Consumer established connection with Broker on port: " + this.socket.getPort());
             String topic;
             synchronized (lock) {
-                topic = consoleInput("Please enter consumer topic: ");
+                topic = consoleInput("SYSTEM: Please enter consumer topic: ");
                 if (topic != null) {
                     while (true) {
                         int response = checkBroker(topic);
                         if (response == 0) { //non-existing topic case
-                            System.out.println("There is no existing topic named: " + topic + ". Here are available ones: " + availableTopics);
-                            topic = consoleInput("Please enter consumer topic: ");
+                            System.out.println("SYSTEM: There is no existing topic named: " + topic + ". Here are available ones: " + availableTopics);
+                            topic = consoleInput("SYSTEM: Please enter consumer topic: ");
                         } else if (response != socket.getPort()) { //incorrect port
                             System.out.println("SYSTEM: Switching Consumer connection to another broker on port: " + response);
                             connect(response, conRequest);
@@ -57,7 +57,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
                 listenForMessage(); //listening for messages
             }
         } else {
-            System.out.println("Consumer exiting...");
+            System.out.println("SYSTEM: Consumer exiting...");
         }
     }
 
@@ -65,7 +65,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         try {
             Object message = objectInputStream.readObject();
             if (message instanceof Value && ((Value)message).getRequestType().equalsIgnoreCase("liveMessage")){
-                System.out.println("Receiving live chat message:" + message);
+                System.out.println("SYSTEM: Receiving live chat message:" + message);
                 System.out.println(((Value) message).getProfile().getUsername() +":" + ((Value) message).getMessage());
             }
             else if (message instanceof Value && ((Value)message).getRequestType().equalsIgnoreCase("liveFile")){
@@ -94,7 +94,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
             objectOutputStream.writeObject(value);
             objectOutputStream.flush();
             int incomingTopicMessages = (Integer)objectInputStream.readObject();
-            System.out.println("Conversation history messages: " + incomingTopicMessages);
+            System.out.println("SYSTEM: Number of conversation history messages and files: " + incomingTopicMessages);
             for(int i= 0; i < incomingTopicMessages; i++){
                 data.add((Value)objectInputStream.readObject());
             }
