@@ -111,7 +111,8 @@ public class Consumer extends UserNode implements Runnable,Serializable {
     private synchronized int checkBrokerPort(String topic){ //asking if we are on the correct broker for the topic
         int response = 0;
         try {
-            objectOutputStream.writeObject(topic);
+            Value portCheck = new Value("portCheck",this.profile,topic,conRequest);
+            objectOutputStream.writeObject(portCheck);
             objectOutputStream.flush();
             response = (int)objectInputStream.readObject();
         } catch (IOException | ClassNotFoundException e) {

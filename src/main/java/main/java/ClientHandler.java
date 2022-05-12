@@ -45,18 +45,19 @@ public class ClientHandler implements Runnable,Serializable {
     }
     public void run() {
         Object streamObject = readStream();
-        System.out.println(streamObject);
+        Value current = (Value)streamObject;
         int correctPort = -1;
         String correctAddress = null;
-        if (streamObject instanceof String topic) {
+        if(current.getMessage().equalsIgnoreCase("portCheck")){
+            System.out.println(streamObject);
             while (correctPort <= 0) { //while provided topic does not exist, we continuously ask for a valid one from the component
                 System.out.println(correctAddress + " " + correctPort);
-                correctPort = Broker.searchBrokerPort(topic);
+                correctPort = Broker.searchBrokerPort(current);
                 correctAddress = Broker.getAddress(correctPort);
                 sendCorrectBrokerPort(correctPort); //sending correct Broker port
                 sendCorrectBrokerAddress(correctAddress); //sending correct Broker address
                 if (correctPort <= 0) {
-                    topic = (String)readStream();
+                    current = (Value)readStream();
                 }
             }
         }

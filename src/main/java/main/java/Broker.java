@@ -125,11 +125,11 @@ public class Broker implements Serializable {
         return portsAndAddresses.get(correctPort);
     }
 
-    public static int searchBrokerPort(String topic){ //searching for the correct broker given the topic
+    public static int searchBrokerPort(Value value){ //searching for the correct broker given the topic
         int port = 0;
         int id = -1;
         for (Map.Entry<String, Integer> entry : topicsToBrokers.entrySet()){
-            if (entry.getKey().equalsIgnoreCase(topic)){
+            if (entry.getKey().equalsIgnoreCase(value.getTopic())){
                 id = entry.getValue(); //getting the id
             }
         }
