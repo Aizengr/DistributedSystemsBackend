@@ -73,7 +73,7 @@ public class Publisher extends UserNode implements Runnable,Serializable{
     private synchronized int checkBrokerPort(String topic){ //checking if we are on the correct broker
         int response = 0;
         try {
-            Value portCheck = new Value("portCheck",this.profile,topic,conRequest);
+            Value portCheck = new Value("portCheck",this.profile,topic,pubRequest);
             objectOutputStream.writeObject(portCheck);
             objectOutputStream.flush();
             response = (int)objectInputStream.readObject();

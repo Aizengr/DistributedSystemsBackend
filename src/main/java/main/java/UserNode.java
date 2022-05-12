@@ -229,7 +229,7 @@ public class UserNode implements Serializable {
     public static void main(String[] args) { //running UserNode
 
         UserNode.readConfig(System.getProperty("user.dir").concat("\\src\\main\\java\\main\\java\\config.txt"));
-        Profile profile = new Profile("mitsos");
+        Profile profile = new Profile("kotsos");
         Publisher kostaspub = new Publisher(profile);
         Consumer kostascon = new Consumer(profile);
         Thread pub = new Thread(kostaspub); //initiating both on random port
