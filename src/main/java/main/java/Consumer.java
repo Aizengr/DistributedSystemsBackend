@@ -33,11 +33,19 @@ public class Consumer extends UserNode implements Runnable,Serializable {
                     while (true) {
                         int portResponse = checkBrokerPort(topic);
                         String addressResponse = checkBrokerAddress();
+
+                        System.out.println(portResponse + " " + addressResponse);
+
                         if (portResponse == 0 || addressResponse==null) { //non-existing topic case
                             System.out.println("SYSTEM: There is no existing topic named: " + topic + ". Here are available ones: " + availableTopics);
                             topic = consoleInput("SYSTEM: Please enter consumer topic: ");
                         } else if (portResponse != socket.getPort() || !addressResponse.equalsIgnoreCase(this.socket.getInetAddress().toString().substring(1))) { //incorrect port
+
                             System.out.println(this.socket.getInetAddress().toString());
+                            System.out.println(addressResponse);
+                            System.out.println(this.socket.getPort());
+                            System.out.println(portResponse);
+
                             System.out.println("SYSTEM: Switching Consumer connection to another broker on port: " + portResponse + " and hostname: " + addressResponse);
                             connect(portResponse, addressResponse, conRequest);
                             System.out.println("SYSTEM: Connected");

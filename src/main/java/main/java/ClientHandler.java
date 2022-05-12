@@ -46,6 +46,7 @@ public class ClientHandler implements Runnable,Serializable {
     public void run() {
         Object streamObject = readStream();
         Value currentMessage = (Value)streamObject;
+        System.out.println();
         int correctPort = -1;
         String correctAddress = null;
 
@@ -65,7 +66,6 @@ public class ClientHandler implements Runnable,Serializable {
                 }
             }
         }
-
         if (correctPort == this.socket.getLocalPort() && Objects.equals(correctAddress, Broker.getAddress(this.socket.getLocalPort()))) { //if we are on the correct broker
             while (!socket.isClosed()) {
                 Value value = (Value)readStream();
