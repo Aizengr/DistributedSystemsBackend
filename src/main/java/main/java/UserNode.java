@@ -22,7 +22,7 @@ public class UserNode implements Serializable {
 
     protected static final Object lock = new Object();
 
-    protected static final int[] portNumbers = new int[]{3000}; //for testing 1 broker only please keep 1 port and run the broker on the same
+    protected static final int[] portNumbers = new int[]{3000,4000}; //for testing 1 broker only please keep 1 port and run the broker on the same
     protected static HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresses
     protected static HashMap<Integer,Integer> availableBrokers =  new HashMap<>(); //ids, ports
     protected static List<String> availableTopics = new ArrayList<>();

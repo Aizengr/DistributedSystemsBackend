@@ -45,22 +45,27 @@ public class ClientHandler implements Runnable,Serializable {
     }
     public void run() {
         Object streamObject = readStream();
-        Value current = (Value)streamObject;
+        Value currentMessage = (Value)streamObject;
         int correctPort = -1;
         String correctAddress = null;
-        if(current.getMessage().equalsIgnoreCase("portCheck")){
+
+        if(currentMessage.getMessage().equalsIgnoreCase("portCheck")){
             System.out.println(streamObject);
             while (correctPort <= 0) { //while provided topic does not exist, we continuously ask for a valid one from the component
                 System.out.println(correctAddress + " " + correctPort);
-                correctPort = Broker.searchBrokerPort(current);
+                correctPort = Broker.searchBrokerPort(currentMessage);
                 correctAddress = Broker.getAddress(correctPort);
                 sendCorrectBrokerPort(correctPort); //sending correct Broker port
                 sendCorrectBrokerAddress(correctAddress); //sending correct Broker address
-                if (correctPort <= 0) {
-                    current = (Value)readStream();
+                if (correctPort == this.socket.getLocalPort()){
+                    break;
+                }
+                else {
+                    currentMessage = (Value)readStream();
                 }
             }
         }
+
         if (correctPort == this.socket.getLocalPort() && Objects.equals(correctAddress, Broker.getAddress(this.socket.getLocalPort()))) { //if we are on the correct broker
             while (!socket.isClosed()) {
                 Value value = (Value)readStream();
@@ -127,7 +132,6 @@ public class ClientHandler implements Runnable,Serializable {
 
     private synchronized void sendCorrectBrokerAddress(String address){
         try {
-            System.out.println(address);
             out.writeObject(address); //sending correct broker port to UserNode
             out.flush();
         } catch (IOException e) {
