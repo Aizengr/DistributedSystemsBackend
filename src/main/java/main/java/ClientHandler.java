@@ -50,6 +50,7 @@ public class ClientHandler implements Runnable,Serializable {
         String correctAddress = null;
         if (streamObject instanceof String topic) {
             while (correctPort <= 0) { //while provided topic does not exist, we continuously ask for a valid one from the component
+                System.out.println(correctAddress + " " + correctPort);
                 correctPort = Broker.searchBrokerPort(topic);
                 correctAddress = Broker.getAddress(correctPort);
                 sendCorrectBrokerPort(correctPort); //sending correct Broker port

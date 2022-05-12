@@ -40,6 +40,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
                             System.out.println(this.socket.getInetAddress().toString());
                             System.out.println("SYSTEM: Switching Consumer connection to another broker on port: " + portResponse + " and hostname: " + addressResponse);
                             connect(portResponse, addressResponse, conRequest);
+                            System.out.println("SYSTEM: Connected");
                         } else break; //correct port
                     }
                 }
