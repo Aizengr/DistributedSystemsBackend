@@ -74,13 +74,13 @@ public class ClientHandler implements Runnable,Serializable {
                     if (value.getRequestType().equalsIgnoreCase("Publisher")) {
                         checkPublisher(value.getProfile(), value.getTopic());
                         if (!value.isFile()) {
-                            messagesMap.put(value.getTopic(), value); //adding to history
+                            addToHistory(value); //adding to history
                             broadcastMessage(value.getTopic(), value);//live message broadcasting to all connected consumers
                         } else {
                             List<Value> chunkList = new ArrayList<>();
                             while (value.getRemainingChunks() >= 0) { //while having remaining chunks for a file, read them
                                 try {
-                                    messagesMap.put(value.getTopic(), value); //adding all chunks to history
+                                    addToHistory(value); //adding all chunks to history
                                     chunkList.add(value);
                                     if (value.getRemainingChunks() == 0) {break;}
                                     value = (Value) in.readObject();
@@ -121,7 +121,7 @@ public class ClientHandler implements Runnable,Serializable {
     }
 
 
-    private synchronized void sendCorrectBrokerPort(int port){
+    private void sendCorrectBrokerPort(int port){
         try {
             out.writeObject(port); //sending correct broker port to UserNode
             out.flush();
@@ -130,7 +130,7 @@ public class ClientHandler implements Runnable,Serializable {
         }
     }
 
-    private synchronized void sendCorrectBrokerAddress(String address){
+    private void sendCorrectBrokerAddress(String address){
         try {
             out.writeObject(address); //sending correct broker port to UserNode
             out.flush();
@@ -173,6 +173,10 @@ public class ClientHandler implements Runnable,Serializable {
         }
     }
 
+    private synchronized void addToHistory(Value value) {
+        messagesMap.put(value.getTopic(), value);
+    }
+
 
     private synchronized void pull(String topic){ //main pull function
         int count = checkValueCount(topic); //retrieving messages and files from history data structure and sending them
@@ -194,7 +198,7 @@ public class ClientHandler implements Runnable,Serializable {
         }
     }
 
-    private synchronized int checkValueCount(String topic){ //checks how many messages we have for the specific topic
+    private int checkValueCount(String topic){ //checks how many messages we have for the specific topic
         int count = 0;
         for (Map.Entry<String,Value> entry : messagesMap.entries()){
             if (entry.getKey().equalsIgnoreCase(topic)){
@@ -219,7 +223,7 @@ public class ClientHandler implements Runnable,Serializable {
         }
     }
 
-    public synchronized Object readStream(){ //main reading object method
+    public Object readStream(){ //main reading object method
         try {
             return in.readObject();
         } catch (ClassNotFoundException | IOException e){

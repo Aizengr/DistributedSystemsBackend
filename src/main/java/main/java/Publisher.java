@@ -37,20 +37,22 @@ public class Publisher extends UserNode implements Runnable,Serializable{
             System.out.println("--------- YOU CAN START CHATTING -----------");
             while (!socket.isClosed()) {
                 String messageToSend = consoleInput();
-                if (messageToSend.equalsIgnoreCase("file")) { //type file to initiate file upload
-                    System.out.println("SYSTEM: Please give full file path: \n");
-                    String path = this.inputScanner.nextLine();
-                    MultimediaFile file = new MultimediaFile(path);
-                    this.profile.addFileToProfile(file.getFileName(), file); //adding file to profile (later we will check if there are any new uploads and push the file)
-                } else if (messageToSend.equalsIgnoreCase("exit")) { //exit for dc
-                    disconnectComponents(this.currentPort); //disconnects both consumer and publisher (this can be changed to disconnect only publisher if needed)
-                } else {
-                    Value messageValue = new Value(messageToSend, this.profile, topic, pubRequest);
-                    push(messageValue); //if it's a live chat message we push it
-                }
-                if (checkForNewContent()) { //if a new file is added to profile we also push it
-                    MultimediaFile uploadedFile = getNewContent();
-                    pushChunks(topic, uploadedFile);
+                if (messageToSend!= null) {
+                    if (messageToSend.equalsIgnoreCase("file")) { //type file to initiate file upload
+                        System.out.println("SYSTEM: Please give full file path: \n");
+                        String path = this.inputScanner.nextLine();
+                        MultimediaFile file = new MultimediaFile(path);
+                        this.profile.addFileToProfile(file.getFileName(), file); //adding file to profile (later we will check if there are any new uploads and push the file)
+                    } else if (messageToSend.equalsIgnoreCase("exit")) { //exit for dc
+                        disconnectComponents(this.currentPort); //disconnects both consumer and publisher (this can be changed to disconnect only publisher if needed)
+                    } else {
+                        Value messageValue = new Value(messageToSend, this.profile, topic, pubRequest);
+                        push(messageValue); //if it's a live chat message we push it
+                    }
+                    if (checkForNewContent()) { //if a new file is added to profile we also push it
+                        MultimediaFile uploadedFile = getNewContent();
+                        pushChunks(topic, uploadedFile);
+                    }
                 }
             }
         } else {
