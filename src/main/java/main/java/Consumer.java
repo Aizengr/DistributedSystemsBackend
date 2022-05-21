@@ -98,7 +98,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
     }
 
 
-    private synchronized List<Value> getConversationData(String topic){ //getting conversation history once we connect to the topic
+    private List<Value> getConversationData(String topic){ //getting conversation history once we connect to the topic
         List<Value> data = new ArrayList<>();
         Value value = new Value("datareq", this.profile, topic, conRequest);
         try {
@@ -116,7 +116,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         return data;
     }
 
-    private synchronized int checkBrokerPort(String topic){ //asking if we are on the correct broker for the topic
+    private int checkBrokerPort(String topic){ //asking if we are on the correct broker for the topic
         int response = 0;
         try {
             Value portCheck = new Value("portCheck",this.profile,topic,conRequest);
@@ -130,7 +130,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         return response;
     }
 
-    private synchronized String checkBrokerAddress(){ //broker will also send the address so we read it as well
+    private String checkBrokerAddress(){ //broker will also send the address so we read it as well
         String response = null;
         try {
             response = (String)objectInputStream.readObject();

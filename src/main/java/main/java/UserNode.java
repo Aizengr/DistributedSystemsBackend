@@ -56,7 +56,7 @@ public class UserNode implements Serializable {
         return new Profile("NoUsername");
     } //creates a noUsername prof
 
-    protected synchronized String consoleInput(String message){ //synchronized method to be used with the lock
+    protected String consoleInput(String message){ //synchronized method to be used with the lock
         System.out.println(message);
         String input = null;
         if (this.inputScanner.hasNextLine()) {
@@ -229,7 +229,7 @@ public class UserNode implements Serializable {
     public static void main(String[] args) { //running UserNode
 
         UserNode.readConfig(System.getProperty("user.dir").concat("\\src\\main\\java\\main\\java\\config.txt"));
-        Profile profile = new Profile("mitsos");
+        Profile profile = new Profile("Swtos");
         Publisher kostaspub = new Publisher(profile);
         Consumer kostascon = new Consumer(profile);
         Thread pub = new Thread(kostaspub); //initiating both on random port

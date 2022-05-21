@@ -60,7 +60,7 @@ public class Publisher extends UserNode implements Runnable,Serializable{
         }
     }
 
-    public synchronized void pushChunks(String topic, MultimediaFile file){ //splitting in chunks and pushing each one
+    public void pushChunks(String topic, MultimediaFile file){ //splitting in chunks and pushing each one
         List<byte[]> chunkList = file.splitInChunks();
         String fileID = file.getFileID();
         Value chunk;
@@ -72,7 +72,7 @@ public class Publisher extends UserNode implements Runnable,Serializable{
             push(chunk);
         }
     }
-    private synchronized int checkBrokerPort(String topic){ //checking if we are on the correct broker
+    private int checkBrokerPort(String topic){ //checking if we are on the correct broker
         int response = 0;
         try {
             Value portCheck = new Value("portCheck",this.profile,topic,pubRequest);
@@ -86,7 +86,7 @@ public class Publisher extends UserNode implements Runnable,Serializable{
         return response;
     }
 
-    private synchronized String checkBrokerAddress(){ //checking if we are on the correct broker
+    private String checkBrokerAddress(){ //checking if we are on the correct broker
         String response = null;
         try {
             response = (String)objectInputStream.readObject();
@@ -127,7 +127,7 @@ public class Publisher extends UserNode implements Runnable,Serializable{
     private MultimediaFile getNewContent(){ //gets first item in upload Q
         return this.profile.getFileFromUploadQueue();
     }
-    public synchronized void push(Value value){ //initial push
+    public void push(Value value){ //initial push
 
         try {
             System.out.printf("SYSTEM: Trying to push to topic: %s with value: %s%n\n", value.getTopic() , value);
