@@ -1,4 +1,4 @@
-package main.java;
+package my.project.dsproject;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -10,32 +10,53 @@ public class Value implements Serializable{    //serializable object for all kin
     private final Profile profile;
     private String requestType, fileID;
     private byte[] chunk;
+    private int messageNumber = 0;
     private int remainingChunks;
-    private final boolean fileSharing;
+    private boolean fileSharing = false;
+    private MultimediaFile multimediaFile;
+    String fileType;
 
 
-    public Value(String message, Profile profile, String requestType) {
-        this.message = message;
-        this.profile = profile;
-        this.requestType = requestType;
-        this.fileSharing = false;
-    }
 
     public Value(String message, Profile profile, String topic, String requestType) {
         this.message = message;
         this.profile = profile;
         this.topic = topic;
         this.requestType = requestType;
-        this.fileSharing = false;
     }
 
-    public Value(String message, String chunkName, Profile profile, String topic, String fileID, int remainingChunks, byte[] chunk, String requestType){
+    public Value(String message, Profile profile, String requestType) {
+        this.message = message;
+        this.profile = profile;
+        this.requestType = requestType;
+    }
+
+    public Value(String message, Profile profile, String topic, String requestType, String fileType) {
+        this.message = message;
+        this.profile = profile;
+        this.topic = topic;
+        this.requestType = requestType;
+        this.fileType = fileType;
+    }
+
+
+    public Value(MultimediaFile file, Profile profile, String topic, String fileType){
+        this.multimediaFile = file;
+        this.filename = this.multimediaFile.getFileName();
+        this.profile = profile;
+        this.topic = topic;
+        this.fileType = fileType;
+        this.fileSharing = true;
+    }
+
+    public Value(String message, String chunkName, Profile profile, String topic, String fileID, int remainingChunks, byte[] chunk, String requestType, String fileType){
         this.message = message;
         this.chunk = Arrays.copyOf(chunk,chunk.length);
         this.profile = profile;
         this.topic = topic;
         this.fileID = fileID;
         this.remainingChunks = remainingChunks;
+        this.fileType = fileType;
         this.filename = chunkName;
         this.requestType = requestType;
         this.fileSharing = true;
@@ -62,6 +83,21 @@ public class Value implements Serializable{    //serializable object for all kin
         return string;
     }
 
+    public String getFileType() {
+        return fileType;
+    }
+
+    public MultimediaFile getMultimediaFile() {
+        return multimediaFile;
+    }
+
+    public void setMessageNumber(int number){
+        this.messageNumber = number;
+    }
+
+    public int getMessageNumber(){
+        return this.messageNumber;
+    }
 
     public String getMessage() {
         return message;
@@ -99,13 +135,7 @@ public class Value implements Serializable{    //serializable object for all kin
 
     public String getFileID(){return this.fileID;}
 
-    public void setFilename(String filename){
-        this.filename = filename;
-    }
-
-    public void setChunk(byte[] chunk) {
-        this.chunk = chunk;
-    }
+    public String getFileExt(){ return this.filename.substring(this.filename.lastIndexOf("."));}
 
     public byte[] getChunk() {
         return chunk;

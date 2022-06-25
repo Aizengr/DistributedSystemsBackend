@@ -1,4 +1,4 @@
-package main.java;
+package my.project.dsproject;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.*;
@@ -20,11 +20,12 @@ public class Broker implements Serializable {
 
     private final ServerSocket serverSocket;
 
-    public Broker(ServerSocket serverSocket, InetAddress address, int id){
+    public Broker(ServerSocket serverSocket, InetAddress address, int id) throws SocketException {
         this.serverSocket = serverSocket;
+        this.serverSocket.setReuseAddress(true);
         this.address = address;
         this.id = id;
-        readConfig(System.getProperty("user.dir").concat("\\src\\main\\java\\main\\java\\config.txt")); //reading ports ids and ips from config file
+        readConfig(System.getProperty("user.dir").concat("\\src\\main\\java\\my\\project\\dsproject\\config.txt")); //reading ports ids and ips from config file
         hashTopics();
         assignTopicsToBrokers();
     }
@@ -143,8 +144,16 @@ public class Broker implements Serializable {
 
     public static void main(String[] args) throws IOException {
 
-        ServerSocket serverSocket = new ServerSocket(3000); //port numbers 3000/4000/5000
-        Broker broker = new Broker(serverSocket, InetAddress.getByName("127.0.0.1"), 0); //with IDs 0/1/2 respectively
+        int socket, id;
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(System.in));
+        System.out.println("Give socket port: ");
+        socket = Integer.parseInt(reader.readLine());
+        System.out.println("Give broker ID: ");
+        id = Integer.parseInt(reader.readLine());
+
+        ServerSocket serverSocket = new ServerSocket(socket); //port numbers 3000/4000/5000
+        Broker broker = new Broker(serverSocket, InetAddress.getByName("192.168.100.3"), id); //with IDs 0/1/2 respectively
         System.out.println("SYSTEM: Broker_" + broker.getBrokerID()+" initialized at: "
                 + serverSocket + "with address: " +  broker.getBrokerAddress());
         broker.startBroker();

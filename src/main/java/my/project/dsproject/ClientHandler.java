@@ -1,9 +1,8 @@
-package main.java;
+package my.project.dsproject;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.TreeMultimap;
 
 import java.io.*;
 import java.net.Socket;
@@ -40,30 +39,23 @@ public class ClientHandler implements Runnable,Serializable {
             }
             this.username = initMessage.getUsername();
         } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
             closeEverything(socket, out, in);
         }
     }
     public void run() {
         Object streamObject = readStream();
         Value currentMessage = (Value)streamObject;
-        System.out.println();
         int correctPort = -1;
         String correctAddress = null;
-
-        if(currentMessage.getMessage().equalsIgnoreCase("portCheck")){
-            System.out.println(streamObject);
-            while (correctPort <= 0) { //while provided topic does not exist, we continuously ask for a valid one from the component
-                System.out.println(correctAddress + " " + correctPort);
+        if(currentMessage!= null){
+            if(currentMessage.getMessage().equalsIgnoreCase("portCheck")){
                 correctPort = Broker.searchBrokerPort(currentMessage);
                 correctAddress = Broker.getAddress(correctPort);
+                System.out.println("FROM PORT CHECK: " + streamObject);
+                System.out.println("CORRECT ADDRESS AND PORT FOUND - - - " + correctAddress + " - - - " + correctPort);
                 sendCorrectBrokerPort(correctPort); //sending correct Broker port
                 sendCorrectBrokerAddress(correctAddress); //sending correct Broker address
-                if (correctPort == this.socket.getLocalPort()){
-                    break;
-                }
-                else {
-                    currentMessage = (Value)readStream();
-                }
             }
         }
         if (correctPort == this.socket.getLocalPort() && Objects.equals(correctAddress, Broker.getAddress(this.socket.getLocalPort()))) { //if we are on the correct broker
@@ -162,7 +154,8 @@ public class ClientHandler implements Runnable,Serializable {
         for (ClientHandler consumer : connectedConsumers){
             if (!consumer.getUsername().equalsIgnoreCase(this.username)){
                 System.out.println("Broadcasting to topic: " + topic.toUpperCase() +
-                        "for: " + this.username + " and value: " + value);
+                        "for: " + consumer.username + " and value: " + value +
+                        " from: " + value.getUsername());
                 try {
                     consumer.out.writeObject(value);
                     consumer.out.flush();
@@ -186,11 +179,14 @@ public class ClientHandler implements Runnable,Serializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        int messageCounter = 0;
         for (Map.Entry<String,Value> entry : messagesMap.entries()){
             if (entry.getKey().equalsIgnoreCase(topic)){
                 try {
+                    entry.getValue().setMessageNumber(messageCounter);
                     System.out.println("SYSTEM: Pulling: "  + entry.getValue());
                     out.writeObject(entry.getValue());
+                    messageCounter++;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -226,9 +222,9 @@ public class ClientHandler implements Runnable,Serializable {
     public Object readStream(){ //main reading object method
         try {
             return in.readObject();
-        } catch (ClassNotFoundException | IOException e){
+        } catch (ClassNotFoundException | IOException e ){
             closeEverything(socket, out, in);
-            System.out.println(e.getMessage());
+            //e.printStackTrace();
         }
         return null;
     }
